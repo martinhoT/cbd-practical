@@ -16,3 +16,6 @@ Keys:
 
 Notes:
 -Counters start at 0
+-The application can assume that usernames are always unique. However,
+uids are used in order to maintain most of the database entries intact
+if a user changes their username

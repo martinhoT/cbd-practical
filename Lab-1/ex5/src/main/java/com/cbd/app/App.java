@@ -7,7 +7,9 @@ import redis.clients.jedis.ScanResult;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+
+// Applications should not use the private "r..." functions, as they
+// communicate with the Redis database through Jedis
 
 //TODO: use transactions?
 
@@ -15,7 +17,7 @@ public class App {
 
     private final Jedis jedis;
 
-    private int session_uid = -1;
+    private String session_uid = "-1";
     private String session_name = "";
 
     public App() {
@@ -44,7 +46,8 @@ public class App {
                     "4-Print following messages%n" +
                     "5-Print all messages sent%n" +
                     "6-Print directed messages%n" +
-                    "7-Log out%n" +
+                    "7-Direct chat history%n" +
+                    "8-Log out%n" +
                     "Logged in as user \"" + session_name + "\"%n");
         }
         System.out.print("Operation (press Enter to quit): ");
@@ -104,16 +107,16 @@ public class App {
 
     // Done after sign in/sign up, in order to populate session details, such as the uid
     private void obtainSessionDetails(String user) {
-        setSessionUID(Integer.parseInt(jedis.hget("uinfo:" + user, "uid")));
+        setSessionUID(rGetUserUid(user));
         setSessionName(user);
     }
 
     public void logOut() {
-        setSessionUID(-1);
-        setSessionName("");
+        setSessionUID(Message.GLOBAL_ID);
+        setSessionName(Message.GLOBAL_NAME);
     }
 
-    private void setSessionUID(int uid) {
+    private void setSessionUID(String uid) {
         session_uid = uid;
     }
 
@@ -122,7 +125,7 @@ public class App {
     }
 
     public boolean loggedIn() {
-        return session_uid >= 0;
+        return !session_uid.equals(Message.GLOBAL_ID);
     }
 
     /*
@@ -154,7 +157,7 @@ public class App {
                         app.follow(inputWord("Username: ", sc));
                         break;
                     case "4":
-                        for (Map.Entry<String, List<String>> follow : app.getFollowedMessages().entrySet()) {
+                        for (Map.Entry<String, List<Message>> follow : app.getFollowedMessages().entrySet()) {
                             System.out.println(follow.getKey() + ":");
                             follow.getValue().forEach((x) -> System.out.println(" " + x));
                         }
@@ -166,6 +169,9 @@ public class App {
                         app.getDirectedMessages().forEach(System.out::println);
                         break;
                     case "7":
+                        app.getDirectHistory(inputWord("Username: ", sc)).forEach(System.out::println);
+                        break;
+                    case "8":
                         app.logOut();
                         break;
                     default:
@@ -199,7 +205,7 @@ public class App {
 
                         System.out.println(separator);
 
-                        System.out.println("Signing up as kujou");
+                        System.out.println("Signing up as kujo");
                         app.signUp("kujo", "sara");
                         app.sendGlobalMessage("hey");
                         app.follow("koko");
@@ -230,7 +236,7 @@ public class App {
                         System.out.println("Signing in as kujo");
                         app.signIn("kujo", "sara");
                         System.out.println("Followed messages:");
-                        for (Map.Entry<String, List<String>> follow : app.getFollowedMessages().entrySet()) {
+                        for (Map.Entry<String, List<Message>> follow : app.getFollowedMessages().entrySet()) {
                             System.out.println(follow.getKey() + ":");
                             follow.getValue().forEach((x) -> System.out.println(" " + x));
                         }
@@ -238,6 +244,8 @@ public class App {
                         app.getDirectedMessages().forEach(System.out::println);
                         System.out.println("Sent messages:");
                         app.getSentMessages().forEach(System.out::println);
+                        System.out.println("Message history with \"koko\":");
+                        app.getDirectHistory("koko").forEach(System.out::println);
                         app.logOut();
 
                         break;
@@ -261,7 +269,92 @@ public class App {
         return input;
     }
 
-    private List<Message> scanAllMessages() {
+    public List<Message> getDirectedMessages() {
+        return rGetAllMessages()
+                .stream()
+                .filter((x) -> x.getToName().equals(session_name))
+                .collect(Collectors.toList());
+    }
+
+    public List<Message> getSentMessages() {
+        return rGetUserMessages(session_uid);
+    }
+
+    public void sendGlobalMessage(String content) {
+        rSendMessage(session_uid, content);
+    }
+
+    public List<Message> getGlobalMessages() {
+        return rGetAllMessages()
+                .stream()
+                .filter(Message::isGlobal)
+                .collect(Collectors.toList());
+    }
+
+    public void follow(String followUser) {
+        String followUid = rGetUserUid(followUser);
+
+        if (rGetFollowingUsers(session_uid).contains(followUid)) {
+            System.out.println("Following unsuccessful... you are already following that user!");
+            return;
+        }
+
+        rAddFollowingUsers(followUid);
+        System.out.println("Following successful!");
+    }
+
+    public void sendDirectMessage(String content, String toUser) {
+        rSendMessage(
+                rGetUserUid(session_name),
+                content,
+                rGetUserUid(toUser)
+        );
+    }
+
+    public Map<String, List<Message>> getFollowedMessages() {
+        Map<String, List<Message>> result = new HashMap<>();
+
+        // Obtain the users that are being followed by this session's user
+        // Also populate the followed with a list of their global messages
+        for (String followUid : rGetFollowingUsers(session_uid)) {
+            List<Message> msgs = rGetUserMessages(followUid)
+                    .stream()
+                    .filter(Message::isGlobal)
+                    .collect(Collectors.toList())
+            ;
+
+            result.put(rGetUserName(followUid), msgs);
+        }
+
+        return result;
+    }
+
+    public List<Message> getDirectHistory(String userName) {
+        // Obtain messages from both
+        List<Message> both = rGetUserMessages(session_uid)
+                .stream()
+                .filter((x) -> x.getToName().equals(userName))
+                .collect(Collectors.toList());
+
+        both.addAll(rGetUserMessages(rGetUserUid(userName))
+                .stream()
+                .filter((x) -> x.getToName().equals(session_name))
+                .collect(Collectors.toList()));
+
+        // Sort according to insertion date/id
+        both.sort(Comparator.comparingInt(x -> Integer.parseInt(x.getId())));
+
+        return both;
+    }
+
+    /*
+    * R* family of functions
+    * These functions interact with the Redis database directly through Jedis
+    * Any changes to the database entry structure should be reflected in these functions
+    * Provides a clean interface with the app through the use of the Message class
+    * */
+
+    private List<Message> rGetAllMessages() {
         List<Message> result = new ArrayList<>();
         ScanResult<String> scan;
         String cursor = "0";
@@ -277,126 +370,68 @@ public class App {
         return result;
     }
 
+
     private Message rGetMessage(String key) {
         String[] keySpl = key.split(":");
         return new Message(
                 keySpl[keySpl.length-1],
-                jedis.hget(key, "uid"),
+                rGetUserName(jedis.hget(key, "uid")),
                 jedis.hget(key, "content"),
-                jedis.hget(key, "to")
+                rGetUserName(jedis.hget(key, "to"))
         );
     }
 
-    private String rGetUsername(String uid) {
-        return jedis.get("uinfo:" + uid);
-    }
-
-    public List<String> getDirectedMessages() {
-        List<String> messages = new ArrayList<>();
-        for (String key : scanAllMessages()) {
-            String toUid = jedis.hget(key, "to");
-            // The message must be directed to this user
-            if (toUid.equals(String.valueOf(session_uid)))
-                messages.add(jedis.get("uinfo:" + jedis.hget(key, "uid"))
-                        + ": " + jedis.hget(key, "content"));
-        }
-
-        return messages;
-    }
-
-    public List<String> getSentMessages() {
-        return jedis.lrange("uinfo:" + session_uid + ":msgs", 0, -1)
-                .stream()
-                .sorted()
-                .map((x) -> {
-                    String msgEntry = "msg:" + x;
-                    String to = jedis.hget(msgEntry, "to");
-                    if (!to.equals(".global"))
-                        to = jedis.get("uinfo:" + to);
-                    return to + " <- " + jedis.hget(msgEntry, "content");
-                })
-                .collect(Collectors.toList());
-    }
-
-    public void sendGlobalMessage(String content) {
-        Map<String, String> msgInfo = Map.of(
-                "uid", String.valueOf(session_uid),
-                "content", content,
-                "to", ".global"
-        );
-
-        String mid = jedis.get("cnt:mid");
-        jedis.hset("msg:" + mid, msgInfo);
-        jedis.rpush("uinfo:" + session_uid + ":msgs", mid);
-        jedis.incr("cnt:mid");
-    }
-
-    public List<String> getGlobalMessages() {
-        List<String> messages = new ArrayList<>();
-        // The messages from scanAllMessages() are sorted by insertion time/id
-        for (int i = 0; i < Integer.parseInt(jedis.get("cnt:mid")); i++) {
-            String key = "msg:" + i;
-            // The message must be global, can't be directed to a user
-            if (jedis.hget(key, "to").equals(".global"))
-                messages.add(jedis.get("uinfo:" + jedis.hget(key, "uid")) + ": " +
-                        jedis.hget(key, "content"));
-        }
-
-        return messages;
-    }
-
-    public void follow(String followUser) {
-        String followUid = jedis.hget("uinfo:" + followUser, "uid");
-        String followSet = "uinfo:" + session_uid + ":follows";
-
-        if (jedis.sismember(followSet, followUid)) {
-            System.out.println("Following unsuccessful... you are already following that user!");
-            return;
-        }
-
-        jedis.sadd(followSet, followUid);
-        System.out.println("Following successful!");
-    }
-
-    public void sendDirectMessage(String content, String toUser) {
-        String toEntry = "uinfo:" + toUser;
-
-        if (!jedis.exists(toEntry)) {
+    private void rSendMessage(String uid, String content, String to) {
+        if (!to.equals(Message.GLOBAL_ID) && !jedis.exists("uinfo:" + to)) {
             System.out.println("Message not sent... that user doesn't exist!");
             return;
         }
 
-        String toUid = jedis.hget(toEntry, "uid");
-
-        Map<String, String> msgInfo = Map.of(
-                "uid", String.valueOf(session_uid),
-                "content", content,
-                "to", toUid
-        );
+        if (uid.equals(Message.GLOBAL_ID)) {
+            System.out.println("Message not sent... global can't send messages!");
+            return;
+        }
 
         String mid = jedis.get("cnt:mid");
-        jedis.hset("msg:" + mid, msgInfo);
+
+        jedis.hset("msg:" + mid, Map.of(
+                "uid", uid,
+                "content", content,
+                "to", to
+        ));
         jedis.rpush("uinfo:" + session_uid + ":msgs", mid);
         jedis.incr("cnt:mid");
 
         System.out.println("Message successfully sent!");
     }
 
-    public Map<String, List<String>> getFollowedMessages() {
-        Map<String, List<String>> result = new HashMap<>();
-
-        // Obtain the users that are being followed by this session's user
-        // Also populate the followed with a list their global messages
-        Set<String> followUids = jedis.smembers("uinfo:" + session_uid + ":follows");
-        for (String followUid : followUids) {
-            List<String> msgs = new ArrayList<>();
-            for (String msgId : jedis.lrange("uinfo:" + followUid + ":msgs", 0, -1))
-                if (jedis.hget("msg:" + msgId, "to").equals(".global"))
-                    msgs.add(jedis.hget("msg:" + msgId, "content"));
-
-            result.put(jedis.get("uinfo:" + followUid), msgs);
-        }
-
-        return result;
+    private void rSendMessage(String uid, String content) {
+        rSendMessage(uid, content, Message.GLOBAL_ID);
     }
+
+    private String rGetUserName(String uid) {
+        return uid.equals(Message.GLOBAL_ID) ? Message.GLOBAL_NAME : jedis.get("uinfo:" + uid);
+    }
+
+    private String rGetUserUid(String name) {
+        return jedis.exists("uinfo:" + name)
+                ? jedis.hget("uinfo:" + name, "uid")
+                : Message.GLOBAL_ID;
+    }
+
+    private List<Message> rGetUserMessages(String uid) {
+        return jedis.lrange("uinfo:" + uid + ":msgs", 0, -1)
+                .stream()
+                .map((x) -> rGetMessage("msg:" + x))
+                .collect(Collectors.toList());
+    }
+
+    private Set<String> rGetFollowingUsers(String uid) {
+        return jedis.smembers("uinfo:" + uid + ":follows");
+    }
+
+    private void rAddFollowingUsers(String uid) {
+        jedis.sadd("uinfo:" + session_uid + ":follows", uid);
+    }
+
 }
