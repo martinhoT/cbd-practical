@@ -1,0 +1,100 @@
+sadd org:6:member Paul Linda Denny
+sunion org:5:member org:6:member
+sunion org:5:mem org:6:member
+sunion org:7:mem Bob George Jeff Roy Tom
+sadd org:7:mem Bob George Jeff Roy Tom
+rename org:6:member org:6:mem
+sunion org:6:mem org:7:mem
+keys *
+sunion org:5:mem org:6:mem org:8
+sunion org:5:mem org:6:mem org:7
+sunion org:5:mem org:6:mem org:7:mem
+sinter org:5:mem org:6:mem
+smembers org:5:mem
+smembers org:6:mem
+sinter org:6:mem org:7:mem
+sdiff org:5:mem org:6:mem
+sdiff org:6:mem org:5:mem
+sinter org:5:mem org:7:mem
+zadd copyrightYear 1996 book:1 2014 book:2 1963 book:3
+zadd copyrightYear 1969 book:4
+zrange copyrightYear 0 -1
+zrange copyrightYear 0 -1 WITHSCORES
+zrevrange copyrightYear 0 -1
+zrevrange copyrightYear 0 -1 WITHSCORES
+zadd book:names 0 "Into the Wild" 0 "Cat's Cradle"
+zadd book:names 0 "Time Machine, The" 0 "Gravity's Rainbow"
+zrange book:names 0 -1 WITHSCORES
+zrank copyrightYear book:3
+zrank copyrightYear book:1
+zrank copyrightYear book:56
+zscore copyrightYear book:3
+zscore copyrightYear book.1
+zscore copyrightYear book:1
+zrange copyrightYear 0 -1 WITHSCORES
+zcount copyrightYear 1900 1970
+zrangebyscore copyrightYear 1900 1970 withscores
+zrangebyscore copyrightYear -inf 2000 withscores
+zrangebyscore copyrightYear 1998 +inf withscores
+set movie:1 "Blade Runner"
+hset movie:2 name "Star Wars"
+sadd movie:3 "2001 a Space Odyssey"
+setbit movie:userplays:2014-12-11 2 1
+getbit movie:userplays:2014-12-11 2
+bitcount movie:userplays:2014-12-11
+bitpos movie:userplays:2014-12-11 1
+bitpos movie:userplays:2014-12-11 0
+setbit movie:userplays:2014-12-12 1
+setbit movie:userplays:2014-12-12 1 1
+setbit movie:userplays:2014-12-12 2 1
+bitop and and_result movie:userplays:2014-12-12 movie:userplays:2014-12-12
+getbit and_result 1
+getbit and_result 2
+getbit and_result 3
+bitop and and_result movie:userplays:2014-12-11 movie:userplays:2014-12-12
+getbit and_result 1
+getbit and_result 2
+getbit and_result 3
+bitop or or_result movie:userplays:2014-12-11 movie:userplays:2014-12-12
+getbit or_result 1
+getbit or_result 2
+getbit or_result 3
+bitop or or_result movie:userplays:2014-12-11 movie:userplays:20
+getbit or_result 1
+getbit or_result 2
+bitop xor xor_result movie:userplays:2014-12-11 movie:userplays:2014-12-12
+getbit xor_result 1
+getbit xor_result 2
+getbit xor_result 3
+bitop not not_result movie:userplays:2014-12-11
+getbit not_result 1
+getbit not_result 2
+getbit not_result 3
+pfadd edu:1.att person:1 person:2 person:3 person44556
+pfcount edu:1:att
+rename edu:1.att edu:1:att
+pfcount edu:1:att
+pfadd lit:1:att person:4 person:1
+pfmerge event:att edu:1:att lit:1:att
+pfcount event:att
+discard
+multi
+incr test
+incr test1
+discard
+keys *
+keys test
+keys test*
+multi
+incr test
+incr test1
+exec
+keys *
+keys test
+keys test*
+save
+help
+help save
+help ACL CAT
+acl
+quit
