@@ -85,6 +85,8 @@ Use the `pretty()` function at the end of `find()` in order to increase the read
 
 #### Query selectors
 
+Below are some of the most used query selectors, for various data types:
+
 | Name | Description | Name | Description |
 |------|-------------|------|-------------|
 | $eq  | Equal | $and | And |
@@ -95,6 +97,7 @@ Use the `pretty()` function at the end of `find()` in order to increase the read
 | $lte | Less than or equal | $size | Size of array |
 | $in  | In an array | $text | Text search |
 | $nin | Not in an array | $regex | Match regular expression |
+| $elemMatch | Match all criteria on one array element
 
 For more, see: [Query and Projection Operators](https://docs.mongodb.com/manual/reference/operator/query/)
 
@@ -130,13 +133,23 @@ This operation is not supported on sharded collections
 
 ### Documents
 
+#### Update operators
+
+Before diving into the different ways that a document can be updated, update operations can be of different natures:
+
+| Operator | Description |
+|----------|-------------|
+| $set | Set a field's value to the specified one |
+| $unset | Delete the specified field. The specified value is irrelevant |
+| $rename | Rename a field to the specified value
+
 #### Update fields
 
 ```
 db.<collection name>.update({<selection>}, {$set: {<updated_data>})
 ```
 
-This operation will, by default, only update a single element, but specifying the extra argument `{multi: true}` allows updating multiple documents that match the selection criteria
+This operation will, by default, only update a single element, but specifying the extra argument `{multi: true}` allows updating multiple documents that match the selection criteria. **However, the entire document will be rewritten!**
 
 #### Update entire document {document.save}
 
@@ -320,6 +333,40 @@ db.<collection name>.getIndexes()
 ]
 ```
 
+# Aggregate and MapReduce
+
+Aggregate and MapReduce are like the `GROUP BY` and aggregation operations present in SQL. Aggregate and MapReduce are pretty much the same, in terms of results, but MapReduce is deprecated as of MongoDB 5.0, since Aggregate can provide the same or better functionality through pipeline operators, such as `$group` and `$merge`, and faster. Nevertheless, both are presented down below.
+
+## Aggregate
+
+```
+db.<collection name>.aggregate([
+	{$match: {<having fields>}},
+	{$group: {<group by fields>}}
+])
+```
+
+The available aggregation expression operators (such as `$sum`) can be seen here: [Aggregation Expression Operators](https://docs.mongodb.com/manual/reference/operator/aggregation/#std-label-aggregation-expression-operators)
+
+The available aggregation pipeline operators (such as `$merge`) can be seen here: [Aggregation Pipeline Operators](https://docs.mongodb.com/manual/meta/aggregation-quick-reference/)
+
+![Aggregate](https://www.wenjiangs.com/wp-content/uploads/wikiimg/mongodb/aggregation-pipeline.bakedsvg.svg)
+
+### Single purpose operations
+
+```
+> db.<collection name>.estimatedDocumentCount()
+> db.<collection name>.count()
+> db.<collection name>.distinct(<field>)
+```
+
+## MapReduce
+
+The required syntax for a MapReduce is explained in the image below:
+
+![MapReduce](https://docs.mongodb.com/manual/images/map-reduce.bakedsvg.svg)
+
 # Misc notes
 
 - Functions in the `mongo` interface are implemented in JavaScript, so their code can be read by inputting the function without parenthesis
+- `0` and `1` are equivalent to `true` and `false` as boolean values
