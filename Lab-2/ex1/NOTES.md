@@ -97,7 +97,7 @@ Below are some of the most used query selectors, for various data types:
 | $lte | Less than or equal | $size | Size of array |
 | $in  | In an array | $text | Text search |
 | $nin | Not in an array | $regex | Match regular expression |
-| $elemMatch | Match all criteria on one array element
+| $elemMatch | Match all criteria on one array element | $expr | Match expression (allows top level operators)
 
 For more, see: [Query and Projection Operators](https://docs.mongodb.com/manual/reference/operator/query/)
 
