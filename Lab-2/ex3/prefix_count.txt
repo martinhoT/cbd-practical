@@ -1,0 +1,7 @@
+> db.phones.aggregate([{$group: {_id: {prefix: "$components.prefix"}, count: {$sum: 1}}}])
+{ "_id" : { "prefix" : 231 }, "count" : 33200 }
+{ "_id" : { "prefix" : 21 }, "count" : 33627 }
+{ "_id" : { "prefix" : 232 }, "count" : 33468 }
+{ "_id" : { "prefix" : 234 }, "count" : 33162 }
+{ "_id" : { "prefix" : 233 }, "count" : 33221 }
+{ "_id" : { "prefix" : 22 }, "count" : 33322 }
