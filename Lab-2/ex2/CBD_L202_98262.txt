@@ -244,28 +244,27 @@
 { "n_gastronomia" : 4 }
 
 // 24. Conte quantos restaurantes existem por rua e ordene por ordem decrescente
-// NOT SURE
-> db.restaurants.aggregate([{$group: {_id: {rua: "$address.rua", count: {$sum: 1}}}}, {$sort: {count:-1}}])
-{ "_id" : { "rua" : "Bowne Street", "count" : 1 } }
-{ "_id" : { "rua" : "East 74 Street", "count" : 1 } }
-{ "_id" : { "rua" : "East   48 Street", "count" : 1 } }
-{ "_id" : { "rua" : "Pennsylvania Station (Amtrack)", "count" : 1 } }
-{ "_id" : { "rua" : "West 51 Street", "count" : 1 } }
-{ "_id" : { "rua" : "Lispenard Street", "count" : 1 } }
-{ "_id" : { "rua" : "East   74 Street", "count" : 1 } }
-{ "_id" : { "rua" : "Baxter Avenue", "count" : 1 } }
-{ "_id" : { "rua" : "National Street", "count" : 1 } }
-{ "_id" : { "rua" : "East Gun Hill Road", "count" : 1 } }
-{ "_id" : { "rua" : "Post Avenue", "count" : 1 } }
-{ "_id" : { "rua" : "West   60 Street", "count" : 1 } }
-{ "_id" : { "rua" : "Avenue N", "count" : 1 } }
-{ "_id" : { "rua" : "Clarendon Road", "count" : 1 } }
-{ "_id" : { "rua" : "Johnson Avenue", "count" : 1 } }
-{ "_id" : { "rua" : "New Dorp Lane", "count" : 1 } }
-{ "_id" : { "rua" : "East   52 Street", "count" : 1 } }
-{ "_id" : { "rua" : "East  57 Street", "count" : 1 } }
-{ "_id" : { "rua" : "Newdorp Ln", "count" : 1 } }
-{ "_id" : { "rua" : "Amboy Road", "count" : 1 } }
+> db.restaurants.aggregate([{$group: {_id: {rua: "$address.rua"}, count: {$sum: 1}}}, {$sort: {count:-1}}])
+{ "_id" : { "rua" : "Broadway" }, "count" : 178 }
+{ "_id" : { "rua" : "3 Avenue" }, "count" : 97 }
+{ "_id" : { "rua" : "7 Avenue" }, "count" : 71 }
+{ "_id" : { "rua" : "2 Avenue" }, "count" : 62 }
+{ "_id" : { "rua" : "5 Avenue" }, "count" : 52 }
+{ "_id" : { "rua" : "Northern Boulevard" }, "count" : 49 }
+{ "_id" : { "rua" : "8 Avenue" }, "count" : 48 }
+{ "_id" : { "rua" : "Lexington Avenue" }, "count" : 48 }
+{ "_id" : { "rua" : "Amsterdam Avenue" }, "count" : 46 }
+{ "_id" : { "rua" : "1 Avenue" }, "count" : 44 }
+{ "_id" : { "rua" : "9 Avenue" }, "count" : 40 }
+{ "_id" : { "rua" : "Madison Avenue" }, "count" : 38 }
+{ "_id" : { "rua" : "Queens Boulevard" }, "count" : 35 }
+{ "_id" : { "rua" : "Roosevelt Avenue" }, "count" : 34 }
+{ "_id" : { "rua" : "Jamaica Avenue" }, "count" : 27 }
+{ "_id" : { "rua" : "Columbus Avenue" }, "count" : 24 }
+{ "_id" : { "rua" : "Third Avenue" }, "count" : 23 }
+{ "_id" : { "rua" : "Myrtle Avenue" }, "count" : 22 }
+{ "_id" : { "rua" : "Court Street" }, "count" : 22 }
+{ "_id" : { "rua" : "Nostrand Avenue" }, "count" : 22 }
 ...
 
 // 25. Apresente o nome dos restaurantes que não receberam scores mais recentes que 2011

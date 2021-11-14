@@ -10,15 +10,31 @@ import java.util.function.Consumer;
 
 public class UtilityA {
 
-    public static void insert() {
+    private final MongoCollection<Document> col;
 
+    public UtilityA(MongoCollection<Document> col) { this.col = col; }
+
+    public void insert(Document doc) {
+        col.insertOne(doc);
     }
 
-    public static void edit() {
-
+    public void insert(List<Document> docs) {
+        if (docs.size() == 1)
+            col.insertOne(docs.get(0));
+        else {
+            col.insertMany(docs);
+        }
     }
 
-    public static List<Document> search(MongoCollection<Document> col, Bson filter) {
+    public void editOne(Bson filter, Bson update) {
+        col.updateOne(filter, update);
+    }
+
+    public void editMany(Bson filter, Bson update) {
+        col.updateMany(filter, update);
+    }
+
+    public List<Document> search(Bson filter) {
         List<Document> res = new ArrayList<>();
         col.find(filter).forEach((Consumer<Document>) res::add);
         return res;
