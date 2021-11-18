@@ -13,4 +13,6 @@ public class UtilityB {
     public void index(Bson index) {
         col.createIndex(index);
     }
+
+    public void noIndexes() { col.dropIndexes(); }
 }

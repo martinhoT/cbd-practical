@@ -26,6 +26,14 @@ public class UtilityA {
         }
     }
 
+    public void removeOne(Bson query) {
+        col.deleteOne(query);
+    }
+
+    public void removeMany(Bson query) {
+        col.deleteMany(query);
+    }
+
     public void editOne(Bson filter, Bson update) {
         col.updateOne(filter, update);
     }

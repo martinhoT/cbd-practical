@@ -12,6 +12,7 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -29,29 +30,31 @@ public class App
         // Exercise a)
         UtilityA ua = new UtilityA(rests);
 
-//        ua.insert(new Document(Map.of(
-//            "address", new Document(Map.of(
-//                    "building", "2512",
-//                        "coord", List.of(
-//                                -67.5968969857859,
-//                                50.43542899058
-//                        ),
-//                        "rua", "Street Avenue",
-//                        "zipcode", "746"
-//                )),
-//                "localidade", "Praca da Liberdade",
-//                "gastronomia", "Portuguese",
-//                "grades", List.of(
-//                        new Document(Map.of(
-//                                "date", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse("2014-11-14T00:00:00Z"),
-//                                "grade", "B",
-//                                "score", 3
-//                        ))
-//                ),
-//                "nome", "Example restaurant",
-//                "restaurant_id", "52185712"
-//        )));
-//        System.out.println("Inserted the restaurant 'Example restaurant'!");
+        ua.removeOne(Filters.eq("nome", "Example restaurant"));
+
+        ua.insert(new Document(Map.of(
+            "address", new Document(Map.of(
+                    "building", "2512",
+                        "coord", List.of(
+                                -67.5968969857859,
+                                50.43542899058
+                        ),
+                        "rua", "Street Avenue",
+                        "zipcode", "746"
+                )),
+                "localidade", "Praca da Liberdade",
+                "gastronomia", "Portuguese",
+                "grades", List.of(
+                        new Document(Map.of(
+                                "date", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse("2014-11-14T00:00:00Z"),
+                                "grade", "B",
+                                "score", 3
+                        ))
+                ),
+                "nome", "Example restaurant",
+                "restaurant_id", "52185712"
+        )));
+        System.out.println("Inserted the restaurant 'Example restaurant'!");
 
         docs = ua.search(Filters.eq("nome", "Example restaurant"));
         System.out.println("Documents found with name 'Example restaurant':");
@@ -68,12 +71,15 @@ public class App
         // Exercise b)
         UtilityB ub = new UtilityB(rests);
 
+        // Clean indexes for before→after testing
+        ub.noIndexes();
+
         testSearchSpeed(ua);
 
-//        ub.index(Indexes.ascending("localidade"));
-//        ub.index(Indexes.ascending("gastronomia"));
-//        ub.index(Indexes.text("nome"));
-//        System.out.println("Added indexes!");
+        ub.index(Indexes.ascending("localidade"));
+        ub.index(Indexes.ascending("gastronomia"));
+        ub.index(Indexes.text("nome"));
+        System.out.println("Added indexes!");
 
         testSearchSpeed(ua);
 
@@ -148,11 +154,17 @@ public class App
     }
 
     private static void testSearchSpeed(UtilityA ua) {
+        Instant instantBegin, instantEnd;
+        instantBegin = Instant.now();
+
         System.out.println("Searching by 'localidade'...");
         ua.search(Filters.eq("localidade", "Liberty Square"));
         System.out.println("Searching by 'gastronomia'...");
         ua.search(Filters.eq("gastronomia", "Portuguese"));
         System.out.println("Searching by 'nome'...");
         ua.search(Filters.eq("nome", "res"));
+
+        instantEnd = Instant.now();
+        System.out.println("Time taken (milliseconds): " + (instantEnd.toEpochMilli() - instantBegin.toEpochMilli()));
     }
 }

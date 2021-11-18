@@ -3,8 +3,8 @@ Numero de restaurantes por localidade:
  -> Queens - 738
  -> Staten Island - 158
  -> Liberty Square - 1
- -> Brooklyn - 684
  -> Manhattan - 1883
+ -> Brooklyn - 684
  -> Bronx - 309
 Nome de restaurantes contendo 'Park' no nome:
  -> The Park
