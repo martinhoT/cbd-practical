@@ -5,7 +5,6 @@ function find_phone_patterns() {
 
     cursor.forEach(doc => {
         let phone = doc.number.toString();
-        print(phone)
         if (capicua(phone))
             capicuas.push(phone);
     })
