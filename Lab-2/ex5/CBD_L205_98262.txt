@@ -22,7 +22,7 @@ Overview
     documents or dates. In order to convert them, a Java program with the MongoDB Java driver
     was developed to update each of the documents after importing ("Transformer.java").
     However, the program is very slow, so the file "steam_all.json" includes all the treated data
-    ("mongoexport" was used). This file is about ~250MB large, so it was split into 50MB pieces
+    ("mongoexport" was used). This file is about ~250MB large, so it was split into 25MB pieces
     (using bash's "split" command). A smaller version of the dataset with less entries is present
     in "steam_all_small.json" (the first of the split pieces).
 
