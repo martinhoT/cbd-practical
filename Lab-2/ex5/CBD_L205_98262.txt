@@ -1,0 +1,33 @@
+Overview
+
+    This dataset contains over 27000 video games distributed in the Steam platform. 
+    Each document represents a game, and each of them contain attributes of different types
+    (int, string, array, document, date, boolean), representing title, release date, requirements,
+    store links for screenshots and videos, descriptions, price, critical reception, among others.
+    Many of the attributes' types are self-explanatory. The more elaborate values are for:
+    - movies, screenshots: array of documents, where each document contains information about a
+    descriptive video/screenshot of the game;
+    - linux_requirements, mac_requirements, pc_requirements: document with none, one or both of the
+    "minimum" and "recommended" attributes, each containing an HTML string detailing the
+    requirements;
+    - categories, genres, steamspy_tags: list of strings detailing various categories/genres/tags;
+    - platforms: list of strings, detailing the platforms that this game is available on;
+    - release_date: release date of the game, as a date type;
+    - owners: string containing a range of integer values, that represent the amount of owners.
+
+    The data was obtained from https://www.kaggle.com/nikdavis/steam-store-games. The data is
+    segmented into various ".csv" files. In order to import the files, various "mongoimport"
+    commands were used, which are present in the "import.sh" script.
+    Some of the attribute's values were treated as strings, when they were actually arrays,
+    documents or dates. In order to convert them, a Java program with the MongoDB Java driver
+    was developed to update each of the documents after importing ("Transformer.java").
+    However, the program is very slow, so the file "steam_all.json" includes all the treated data
+    ("mongoexport" was used).
+    The recommended way to import the dataset is to issue the following command:
+    > mongoimport --db=cbd --collection=games --type=json --jsonArray --file=games/steam_all.json
+
+find() examples
+
+- Find all games available on the Linux platform
+
+aggregate() examples
