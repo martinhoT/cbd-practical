@@ -22,12 +22,448 @@ Overview
     documents or dates. In order to convert them, a Java program with the MongoDB Java driver
     was developed to update each of the documents after importing ("Transformer.java").
     However, the program is very slow, so the file "steam_all.json" includes all the treated data
-    ("mongoexport" was used).
+    ("mongoexport" was used). This file is about ~250MB large, so it was split into 50MB pieces
+    (using bash's "split" command). A smaller version of the dataset with less entries is present
+    in "steam_all_small.json" (the first of the split pieces).
+
     The recommended way to import the dataset is to issue the following command:
-    > mongoimport --db=cbd --collection=games --type=json --jsonArray --file=games/steam_all.json
+    > mongoimport --db=cbd --collection=games --type=json --jsonArray --file=games/steam_all_small.json
+
+    NOTE: The following queries were done on the complete dataset.
 
 find() examples
 
-- Find all games available on the Linux platform
+- Find the name of all games available on the Linux platform where the minimum requirements specify the Ubuntu OS.
+> db.games.find({platforms: "linux", "linux_requirements.minimum": {$regex: "Ubuntu"}}, {name: 1})
+{ "_id" : ObjectId("6198123a54a63ee964683f74"), "name" : "Team Fortress Classic" }
+{ "_id" : ObjectId("6198123a54a63ee964683f75"), "name" : "Half-Life: Opposing Force" }
+{ "_id" : ObjectId("6198123a54a63ee964683f76"), "name" : "Counter-Strike" }
+{ "_id" : ObjectId("6198123a54a63ee964683f77"), "name" : "Day of Defeat" }
+{ "_id" : ObjectId("6198123a54a63ee964683f78"), "name" : "Ricochet" }
+{ "_id" : ObjectId("6198123a54a63ee964683f79"), "name" : "Deathmatch Classic" }
+{ "_id" : ObjectId("6198123a54a63ee964683f7a"), "name" : "Half-Life" }
+{ "_id" : ObjectId("6198123a54a63ee964683f7c"), "name" : "Half-Life: Blue Shift" }
+{ "_id" : ObjectId("6198123a54a63ee964683f7d"), "name" : "Half-Life: Source" }
+{ "_id" : ObjectId("6198123a54a63ee964683f83"), "name" : "Half-Life Deathmatch: Source" }
+{ "_id" : ObjectId("6198123a54a63ee964683f87"), "name" : "Team Fortress 2" }
+{ "_id" : ObjectId("6198123a54a63ee964683f88"), "name" : "Left 4 Dead 2" }
+{ "_id" : ObjectId("6198123a54a63ee964683f89"), "name" : "Dota 2" }
+{ "_id" : ObjectId("6198123a54a63ee964683f8b"), "name" : "Portal 2" }
+{ "_id" : ObjectId("6198123a54a63ee964683f8d"), "name" : "Counter-Strike: Global Offensive" }
+{ "_id" : ObjectId("6198123a54a63ee964683f8f"), "name" : "Red Orchestra: Ostfront 41-45" }
+{ "_id" : ObjectId("6198123a54a63ee964683f90"), "name" : "Killing Floor" }
+{ "_id" : ObjectId("6198123a54a63ee964683f9d"), "name" : "Earth 2160" }
+{ "_id" : ObjectId("6198123a54a63ee964683f9f"), "name" : "Two Worlds Epic Edition" }
+{ "_id" : ObjectId("6198123a54a63ee964683fbd"), "name" : "X3: Reunion" }
+...
+
+- For each game, return the name and the number of total movies and screenshots.
+> db.games.find(
+    {},
+    {
+        name: 1,
+        total_media: {
+            $sum: [
+                {$cond: {if: {$isArray: "$movies"}, then: {$size: "$movies"}, else: 0}},
+                {$cond: {if: {$isArray: "$screenshots"}, then: {$size: "$screenshots"}, else: 0}},
+            ]
+        }
+    }
+)
+{ "_id" : ObjectId("6198123a54a63ee964683f74"), "name" : "Team Fortress Classic", "total_media" : 5 }
+{ "_id" : ObjectId("6198123a54a63ee964683f75"), "name" : "Half-Life: Opposing Force", "total_media" : 5 }
+{ "_id" : ObjectId("6198123a54a63ee964683f76"), "name" : "Counter-Strike", "total_media" : 13 }
+{ "_id" : ObjectId("6198123a54a63ee964683f77"), "name" : "Day of Defeat", "total_media" : 5 }
+{ "_id" : ObjectId("6198123a54a63ee964683f78"), "name" : "Ricochet", "total_media" : 4 }
+{ "_id" : ObjectId("6198123a54a63ee964683f79"), "name" : "Deathmatch Classic", "total_media" : 4 }
+{ "_id" : ObjectId("6198123a54a63ee964683f7a"), "name" : "Half-Life", "total_media" : 11 }
+{ "_id" : ObjectId("6198123a54a63ee964683f7b"), "name" : "Half-Life 2", "total_media" : 11 }
+{ "_id" : ObjectId("6198123a54a63ee964683f7c"), "name" : "Half-Life: Blue Shift", "total_media" : 5 }
+{ "_id" : ObjectId("6198123a54a63ee964683f7d"), "name" : "Half-Life: Source", "total_media" : 4 }
+{ "_id" : ObjectId("6198123a54a63ee964683f7e"), "name" : "Counter-Strike: Condition Zero", "total_media" : 8 }
+{ "_id" : ObjectId("6198123a54a63ee964683f7f"), "name" : "Counter-Strike: Source", "total_media" : 5 }
+{ "_id" : ObjectId("6198123a54a63ee964683f80"), "name" : "Day of Defeat: Source", "total_media" : 5 }
+{ "_id" : ObjectId("6198123a54a63ee964683f81"), "name" : "Half-Life 2: Deathmatch", "total_media" : 5 }
+{ "_id" : ObjectId("6198123a54a63ee964683f82"), "name" : "Half-Life 2: Lost Coast", "total_media" : 5 }
+{ "_id" : ObjectId("6198123a54a63ee964683f83"), "name" : "Half-Life Deathmatch: Source", "total_media" : 5 }
+{ "_id" : ObjectId("6198123a54a63ee964683f84"), "name" : "Half-Life 2: Episode One", "total_media" : 9 }
+{ "_id" : ObjectId("6198123a54a63ee964683f85"), "name" : "Half-Life 2: Episode Two", "total_media" : 5 }
+{ "_id" : ObjectId("6198123a54a63ee964683f86"), "name" : "Portal", "total_media" : 11 }
+{ "_id" : ObjectId("6198123a54a63ee964683f87"), "name" : "Team Fortress 2", "total_media" : 31 }
+...
+
+- Return the name and appid, without _id, of the games where the number of owners is greater than or equal to 10000000 but lesser than or equal to 50000000.
+> db.games.find(
+    {
+        $expr: {
+            $and: [
+                {
+                    $gte: [
+                        {
+                            $toInt: {
+                                $arrayElemAt: [ {$split: ["$owners", "-"]}, 0 ]
+                            }
+                        },
+                        10000000
+                    ]
+                },
+                {
+                    $lte: [
+                        {
+                            $toInt: {
+                                $arrayElemAt: [ {$split: ["$owners", "-"]}, 1 ]
+                            }
+                        },
+                        50000000
+                    ]
+                }
+            ]
+        }
+    },
+    {
+        name: 1,
+        appid: 1,
+        _id: 0
+    }
+)
+{ "appid" : 10, "name" : "Counter-Strike" }
+{ "appid" : 220, "name" : "Half-Life 2" }
+{ "appid" : 80, "name" : "Counter-Strike: Condition Zero" }
+{ "appid" : 240, "name" : "Counter-Strike: Source" }
+{ "appid" : 320, "name" : "Half-Life 2: Deathmatch" }
+{ "appid" : 340, "name" : "Half-Life 2: Lost Coast" }
+{ "appid" : 400, "name" : "Portal" }
+{ "appid" : 440, "name" : "Team Fortress 2" }
+{ "appid" : 550, "name" : "Left 4 Dead 2" }
+{ "appid" : 620, "name" : "Portal 2" }
+{ "appid" : 4000, "name" : "Garry's Mod" }
+{ "appid" : 72850, "name" : "The Elder Scrolls V: Skyrim" }
+{ "appid" : 218620, "name" : "PAYDAY 2" }
+{ "appid" : 227940, "name" : "Heroes & Generals" }
+{ "appid" : 230410, "name" : "Warframe" }
+{ "appid" : 236390, "name" : "War Thunder" }
+{ "appid" : 238960, "name" : "Path of Exile" }
+{ "appid" : 271590, "name" : "Grand Theft Auto V" }
+{ "appid" : 291480, "name" : "Warface" }
+{ "appid" : 291550, "name" : "Brawlhalla" }
+...
+
+- For each game with movies, return the name, developer, publisher and the movie that is selected upon entering its store page (highlight==true).
+> db.games.find({ movies: {$exists: true} }, { name: 1, developer: 1, publisher: 1, movies: {$elemMatch: {highlight: true}} })
+{ "_id" : ObjectId("6198123a54a63ee964683f7b"), "name" : "Half-Life 2", "developer" : "Valve", "publisher" : "Valve", "movies" : [ { "id" : 904, "name" : "Half-Life 2 Trailer", "thumbnail" : "https://steamcdn-a.akamaihd.net/steam/apps/904/movie.jpg?t=1507237301", "webm" : { "480" : "http://steamcdn-a.akamaihd.net/steam/apps/904/movie480.webm?t=1507237301", "max" : "http://steamcdn-a.akamaihd.net/steam/apps/904/movie_max.webm?t=1507237301" }, "highlight" : true } ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f84"), "name" : "Half-Life 2: Episode One", "developer" : "Valve", "publisher" : "Valve" }
+{ "_id" : ObjectId("6198123a54a63ee964683f87"), "name" : "Team Fortress 2", "developer" : "Valve", "publisher" : "Valve", "movies" : [ { "id" : 256698790, "name" : "Jungle Inferno", "thumbnail" : "https://steamcdn-a.akamaihd.net/steam/apps/256698790/movie.293x165.jpg?t=1519429751", "webm" : { "480" : "http://steamcdn-a.akamaihd.net/steam/apps/256698790/movie480.webm?t=1519429751", "max" : "http://steamcdn-a.akamaihd.net/steam/apps/256698790/movie_max.webm?t=1519429751" }, "highlight" : true } ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f88"), "name" : "Left 4 Dead 2", "developer" : "Valve", "publisher" : "Valve", "movies" : [ { "id" : 5952, "name" : "Left 4 Dead - The Sacrifice Trailer", "thumbnail" : "https://steamcdn-a.akamaihd.net/steam/apps/5952/movie.293x165.jpg?t=1447353587", "webm" : { "480" : "http://steamcdn-a.akamaihd.net/steam/apps/5952/movie480.webm?t=1447353587", "max" : "http://steamcdn-a.akamaihd.net/steam/apps/5952/movie_max.webm?t=1447353587" }, "highlight" : true } ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f89"), "name" : "Dota 2", "developer" : "Valve", "publisher" : "Valve", "movies" : [ { "id" : 256692021, "name" : "Dota 2 - Join the Battle", "thumbnail" : "https://steamcdn-a.akamaihd.net/steam/apps/256692021/movie.293x165.jpg?t=1554408539", "webm" : { "480" : "http://steamcdn-a.akamaihd.net/steam/apps/256692021/movie480.webm?t=1554408539", "max" : "http://steamcdn-a.akamaihd.net/steam/apps/256692021/movie_max.webm?t=1554408539" }, "highlight" : true } ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f8a"), "name" : "Left 4 Dead", "developer" : "Valve", "publisher" : "Valve", "movies" : [ { "id" : 5149, "name" : "Left 4 Dead TV Spot 2 - 720p", "thumbnail" : "https://steamcdn-a.akamaihd.net/steam/apps/5149/movie.jpg?t=1447351572", "webm" : { "480" : "http://steamcdn-a.akamaihd.net/steam/apps/5149/movie480.webm?t=1447351572", "max" : "http://steamcdn-a.akamaihd.net/steam/apps/5149/movie_max.webm?t=1447351572" }, "highlight" : true } ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f8b"), "name" : "Portal 2", "developer" : "Valve", "publisher" : "Valve", "movies" : [ { "id" : 81613, "name" : "Portal 2 - Perpetual Testing Initiative", "thumbnail" : "https://steamcdn-a.akamaihd.net/steam/apps/81613/movie.293x165.jpg?t=1452903069", "webm" : { "480" : "http://steamcdn-a.akamaihd.net/steam/apps/81613/movie480.webm?t=1452903069", "max" : "http://steamcdn-a.akamaihd.net/steam/apps/81613/movie_max.webm?t=1452903069" }, "highlight" : true } ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f8d"), "name" : "Counter-Strike: Global Offensive", "developer" : "Valve;Hidden Path Entertainment", "publisher" : "Valve", "movies" : [ { "id" : 81958, "name" : "CS:GO Trailer Long", "thumbnail" : "https://steamcdn-a.akamaihd.net/steam/apps/81958/movie.293x165.jpg?t=1554409259", "webm" : { "480" : "http://steamcdn-a.akamaihd.net/steam/apps/81958/movie480.webm?t=1554409259", "max" : "http://steamcdn-a.akamaihd.net/steam/apps/81958/movie_max.webm?t=1554409259" }, "highlight" : true } ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f90"), "name" : "Killing Floor", "developer" : "Tripwire Interactive", "publisher" : "Tripwire Interactive", "movies" : [ { "id" : 5243, "name" : "Killing Floor Launch Trailer", "thumbnail" : "https://steamcdn-a.akamaihd.net/steam/apps/5243/movie.jpg?t=1529340856", "webm" : { "480" : "http://steamcdn-a.akamaihd.net/steam/apps/5243/movie480.webm?t=1529340856", "max" : "http://steamcdn-a.akamaihd.net/steam/apps/5243/movie_max.webm?t=1529340856" }, "highlight" : true } ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f92"), "name" : "Darwinia", "developer" : "Introversion Software", "publisher" : "Introversion Software", "movies" : [ { "id" : 256662819, "name" : "Darwinia trailer HD", "thumbnail" : "https://steamcdn-a.akamaihd.net/steam/apps/256662819/movie.293x165.jpg?t=1460468354", "webm" : { "480" : "http://steamcdn-a.akamaihd.net/steam/apps/256662819/movie480.webm?t=1460468354", "max" : "http://steamcdn-a.akamaihd.net/steam/apps/256662819/movie_max.webm?t=1460468354" }, "highlight" : true } ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f9d"), "name" : "Earth 2160", "developer" : "Reality Pump Studios", "publisher" : "Topware Interactive;ACE", "movies" : [ { "id" : 2029395, "name" : "Earth 2160 Trailer", "thumbnail" : "https://steamcdn-a.akamaihd.net/steam/apps/2029395/movie.293x165.jpg?t=1447358832", "webm" : { "480" : "http://steamcdn-a.akamaihd.net/steam/apps/2029395/movie480.webm?t=1447358832", "max" : "http://steamcdn-a.akamaihd.net/steam/apps/2029395/movie_max.webm?t=1447358832" }, "highlight" : true } ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f9f"), "name" : "Two Worlds Epic Edition", "developer" : "Reality Pump Studios", "publisher" : "Topware Interactive", "movies" : [ { "id" : 996, "name" : "Two Worlds Trailer", "thumbnail" : "https://steamcdn-a.akamaihd.net/steam/apps/996/movie.jpg?t=1548695245", "webm" : { "480" : "http://steamcdn-a.akamaihd.net/steam/apps/996/movie480.webm?t=1548695245", "max" : "http://steamcdn-a.akamaihd.net/steam/apps/996/movie_max.webm?t=1548695245" }, "highlight" : true } ] }
+{ "_id" : ObjectId("6198123a54a63ee964683faf"), "name" : "The Ship: Murder Party", "developer" : "Outerlight Ltd.", "publisher" : "Blazing Griffin Ltd." }
+{ "_id" : ObjectId("6198123a54a63ee964683fb1"), "name" : "Shadowgrounds", "developer" : "Frozenbyte", "publisher" : "Frozenbyte", "movies" : [ { "id" : 908, "name" : "Shadowgrounds Trailer", "thumbnail" : "https://steamcdn-a.akamaihd.net/steam/apps/908/movie.293x165.jpg?t=1447350850", "webm" : { "480" : "http://steamcdn-a.akamaihd.net/steam/apps/908/movie480.webm?t=1447350850", "max" : "http://steamcdn-a.akamaihd.net/steam/apps/908/movie_max.webm?t=1447350850" }, "highlight" : true } ] }
+{ "_id" : ObjectId("6198123a54a63ee964683fba"), "name" : "X2: The Threat", "developer" : "Egosoft", "publisher" : "Egosoft", "movies" : [ { "id" : 5968, "name" : "X Superbox Trailer", "thumbnail" : "https://steamcdn-a.akamaihd.net/steam/apps/5968/movie.293x165.jpg?t=1447353615", "webm" : { "480" : "http://steamcdn-a.akamaihd.net/steam/apps/5968/movie480.webm?t=1447353615", "max" : "http://steamcdn-a.akamaihd.net/steam/apps/5968/movie_max.webm?t=1447353615" }, "highlight" : true } ] }
+{ "_id" : ObjectId("6198123a54a63ee964683fbd"), "name" : "X3: Reunion", "developer" : "Egosoft", "publisher" : "Egosoft" }
+{ "_id" : ObjectId("6198123a54a63ee964683fbe"), "name" : "X3: Terran Conflict", "developer" : "Egosoft", "publisher" : "Egosoft", "movies" : [ { "id" : 5785, "name" : "X3 Terran Conflict Trailer 2.6", "thumbnail" : "https://steamcdn-a.akamaihd.net/steam/apps/5785/movie.293x165.jpg?t=1447353269", "webm" : { "480" : "http://steamcdn-a.akamaihd.net/steam/apps/5785/movie480.webm?t=1447353269", "max" : "http://steamcdn-a.akamaihd.net/steam/apps/5785/movie_max.webm?t=1447353269" }, "highlight" : true } ] }
+{ "_id" : ObjectId("6198123a54a63ee964683fbf"), "name" : "X: Beyond the Frontier", "developer" : "Egosoft", "publisher" : "Egosoft", "movies" : [ { "id" : 5968, "name" : "X Superbox Trailer", "thumbnail" : "https://steamcdn-a.akamaihd.net/steam/apps/5968/movie.293x165.jpg?t=1447353615", "webm" : { "480" : "http://steamcdn-a.akamaihd.net/steam/apps/5968/movie480.webm?t=1447353615", "max" : "http://steamcdn-a.akamaihd.net/steam/apps/5968/movie_max.webm?t=1447353615" }, "highlight" : true } ] }
+{ "_id" : ObjectId("6198123a54a63ee964683fc0"), "name" : "X: Tension", "developer" : "Egosoft", "publisher" : "Egosoft", "movies" : [ { "id" : 5968, "name" : "X Superbox Trailer", "thumbnail" : "https://steamcdn-a.akamaihd.net/steam/apps/5968/movie.293x165.jpg?t=1447353615", "webm" : { "480" : "http://steamcdn-a.akamaihd.net/steam/apps/5968/movie480.webm?t=1447353615", "max" : "http://steamcdn-a.akamaihd.net/steam/apps/5968/movie_max.webm?t=1447353615" }, "highlight" : true } ] }
+{ "_id" : ObjectId("6198123a54a63ee964683fc4"), "name" : "X Rebirth", "developer" : "Egosoft", "publisher" : "Egosoft", "movies" : [ { "id" : 256676399, "name" : "X Rebirth 4.0 Trailer", "thumbnail" : "https://steamcdn-a.akamaihd.net/steam/apps/256676399/movie.293x165.jpg?t=1481819088", "webm" : { "480" : "http://steamcdn-a.akamaihd.net/steam/apps/256676399/movie480.webm?t=1481819088", "max" : "http://steamcdn-a.akamaihd.net/steam/apps/256676399/movie_max.webm?t=1481819088" }, "highlight" : true } ] }
+...
+
+- Return all attributes except "movies", "screenshots", "about_the_game" and "detailed_description" of (one of) the cheapest game released after 2015 with "Steam Workshop" support (present in the categories list).
+> db.games.find(
+    {
+        release_date: {$gt: ISODate("2015-12-31T23:59:59Z")},
+        categories: "Steam Workshop"
+    },
+    {
+        movies:0,
+        screenshots:0,
+        about_the_game:0,
+        detailed_description:0
+    }
+).sort({price:1}).limit(1).pretty()
+{
+	"_id" : ObjectId("6198123a54a63ee96468491e"),
+	"appid" : 271240,
+	"name" : "Offworld Trading Company - Free Multiplayer",
+	"release_date" : ISODate("2016-04-27T23:00:00Z"),
+	"english" : 1,
+	"developer" : "Mohawk Games",
+	"publisher" : "Stardock Entertainment",
+	"platforms" : [
+		"windows",
+		"mac"
+	],
+	"required_age" : 0,
+	"categories" : [
+		"Single-player",
+		"Multi-player",
+		"Online Multi-Player",
+		"Co-op",
+		"Online Co-op",
+		"Cross-Platform Multiplayer",
+		"Steam Achievements",
+		"Steam Trading Cards",
+		"Steam Workshop",
+		"Partial Controller Support",
+		"Steam Cloud",
+		"Stats",
+		"Includes level editor"
+	],
+	"genres" : [
+		"Indie",
+		"Simulation",
+		"Strategy"
+	],
+	"steamspy_tags" : [
+		"Strategy",
+		"Economy",
+		"RTS"
+	],
+	"achievements" : 256,
+	"positive_ratings" : 2810,
+	"negative_ratings" : 966,
+	"average_playtime" : 237,
+	"median_playtime" : 255,
+	"owners" : "500000-1000000",
+	"price" : 0,
+	"short_description" : "Mars has been colonized, and Earth's corporate titans fight to dominate this new market. Competition is fierce in this fast-paced economic RTS from Civilization IV Lead Designer, Soren Johnson.",
+	"background" : "https://steamcdn-a.akamaihd.net/steam/apps/271240/page_bg_generated_v6b.jpg?t=1554297125",
+	"header_image" : "https://steamcdn-a.akamaihd.net/steam/apps/271240/header.jpg?t=1554297125",
+	"linux_requirements" : [ ],
+	"mac_requirements" : {
+		"minimum" : "<strong>Minimum:</strong><br><ul class=\"bb_ul\"><li><strong>OS:</strong> OS X Yosemite or Better<br></li><li><strong>Processor:</strong> 1.4 GHz Intel Core i5<br></li><li><strong>Memory:</strong> 4 GB RAM<br></li><li><strong>Graphics:</strong> Nvidia GeForce 8800 GT / ATI Radeon HD 3870 / Intel HD Graphics 4600<br></li><li><strong>Network:</strong> Broadband Internet connection<br></li><li><strong>Storage:</strong> 2 GB available space</li></ul>",
+		"recommended" : "<strong>Recommended:</strong><br><ul class=\"bb_ul\"><li><strong>OS:</strong> <br></li><li><strong>Processor:</strong> 2.6 GHz Intel Core i5<br></li><li><strong>Memory:</strong> 8 GB RAM<br></li><li><strong>Graphics:</strong> Intel Iris Graphics or Better<br></li><li><strong>Network:</strong> Broadband Internet connection<br></li><li><strong>Storage:</strong> 2 GB available space</li></ul>"
+	},
+	"minimum" : "OS: Windows 10 / 8.1 / 7 Processor: 1.8 GHz Intel Core 2 Duo / 2.0 GHz AMD Athlon X2 64 Memory: 2 GB RAM Graphics: Nvidia GeForce 8800 GT / ATI Radeon HD 3870 / Intel HD Graphics 4600 DirectX: Version 11 Network: Broadband Internet connection Storage: 2 GB available space Sound Card:",
+	"pc_requirements" : {
+		"minimum" : "<strong>Minimum:</strong><br><ul class=\"bb_ul\"><li><strong>OS:</strong> Windows 10 / 8.1 / 7<br></li><li><strong>Processor:</strong> 1.8 GHz Intel Core 2 Duo / 2.0 GHz AMD Athlon X2 64<br></li><li><strong>Memory:</strong> 2 GB RAM<br></li><li><strong>Graphics:</strong> Nvidia GeForce 8800 GT / ATI Radeon HD 3870 / Intel HD Graphics 4600<br></li><li><strong>DirectX:</strong> Version 11<br></li><li><strong>Network:</strong> Broadband Internet connection<br></li><li><strong>Storage:</strong> 2 GB available space<br></li><li><strong>Sound Card:</strong> </li></ul>",
+		"recommended" : "<strong>Recommended:</strong><br><ul class=\"bb_ul\"><li><strong>OS:</strong> Windows 10 / 8.1 / 7<br></li><li><strong>Processor:</strong> 3 GHz Intel Quad-Core Processor / 3.2 GHz AMD Six-Core Processor<br></li><li><strong>Memory:</strong> 4 GB RAM<br></li><li><strong>Graphics:</strong> Nvidia GeForce GTX 460 / AMD Radeon HD 7850<br></li><li><strong>DirectX:</strong> Version 11<br></li><li><strong>Network:</strong> Broadband Internet connection<br></li><li><strong>Storage:</strong> 2 GB available space<br></li><li><strong>Sound Card:</strong> </li></ul>"
+	},
+	"recommended" : "OS: Windows 10 / 8.1 / 7 Processor: 3 GHz Intel Quad-Core Processor / 3.2 GHz AMD Six-Core Processor Memory: 4 GB RAM Graphics: Nvidia GeForce GTX 460 / AMD Radeon HD 7850 DirectX: Version 11 Network: Broadband Internet connection Storage: 2 GB available space Sound Card:",
+	"support_email" : "support@stardock.com",
+	"support_url" : "http://www.stardock.com/support/",
+	"website" : "http://offworldgame.com/"
+}
+
+- Return the name and appid, without _id, of self-published games (developer==publisher) with a median playtime greater than 100 hours.
+> db.games.find({$expr: {$eq: ["$developer", "$publisher"]}, median_playtime: {$gt: 100}}, {name:1, appid:1, _id:0})
+{ "appid" : 10, "name" : "Counter-Strike" }
+{ "appid" : 40, "name" : "Deathmatch Classic" }
+{ "appid" : 220, "name" : "Half-Life 2" }
+{ "appid" : 280, "name" : "Half-Life: Source" }
+{ "appid" : 240, "name" : "Counter-Strike: Source" }
+{ "appid" : 300, "name" : "Day of Defeat: Source" }
+{ "appid" : 380, "name" : "Half-Life 2: Episode One" }
+{ "appid" : 420, "name" : "Half-Life 2: Episode Two" }
+{ "appid" : 400, "name" : "Portal" }
+{ "appid" : 440, "name" : "Team Fortress 2" }
+{ "appid" : 550, "name" : "Left 4 Dead 2" }
+{ "appid" : 570, "name" : "Dota 2" }
+{ "appid" : 500, "name" : "Left 4 Dead" }
+{ "appid" : 620, "name" : "Portal 2" }
+{ "appid" : 1200, "name" : "Red Orchestra: Ostfront 41-45" }
+{ "appid" : 1250, "name" : "Killing Floor" }
+{ "appid" : 1500, "name" : "Darwinia" }
+{ "appid" : 1520, "name" : "DEFCON" }
+{ "appid" : 1530, "name" : "Multiwinia" }
+{ "appid" : 2200, "name" : "Quake III Arena" }
+...
 
 aggregate() examples
+
+- Return the name and categories related to Steam/Valve's features (such as "Steam Achievements") of the games with at least one of those categories.
+> db.games.aggregate([
+    {
+        $project: {
+            name: 1,
+            categories: {
+                $filter: {
+                    input: "$categories",
+                    cond: {
+                        $regexMatch: {
+                            input: "$$this",
+                            regex: "Steam|Valve"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    {
+        $match: {
+            categories: {
+                $not: {$size: 0}
+            }
+        }
+    }
+])
+{ "_id" : ObjectId("6198123a54a63ee964683f74"), "name" : "Team Fortress Classic", "categories" : [ "Valve Anti-Cheat enabled" ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f75"), "name" : "Half-Life: Opposing Force", "categories" : [ "Valve Anti-Cheat enabled" ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f76"), "name" : "Counter-Strike", "categories" : [ "Valve Anti-Cheat enabled" ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f77"), "name" : "Day of Defeat", "categories" : [ "Valve Anti-Cheat enabled" ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f78"), "name" : "Ricochet", "categories" : [ "Valve Anti-Cheat enabled" ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f79"), "name" : "Deathmatch Classic", "categories" : [ "Valve Anti-Cheat enabled" ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f7a"), "name" : "Half-Life", "categories" : [ "Steam Cloud", "Valve Anti-Cheat enabled" ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f7b"), "name" : "Half-Life 2", "categories" : [ "Steam Achievements", "Steam Trading Cards", "Steam Cloud" ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f7e"), "name" : "Counter-Strike: Condition Zero", "categories" : [ "Valve Anti-Cheat enabled" ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f7f"), "name" : "Counter-Strike: Source", "categories" : [ "Steam Achievements", "Steam Cloud", "Valve Anti-Cheat enabled" ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f80"), "name" : "Day of Defeat: Source", "categories" : [ "Steam Achievements", "Steam Trading Cards", "Valve Anti-Cheat enabled" ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f81"), "name" : "Half-Life 2: Deathmatch", "categories" : [ "Valve Anti-Cheat enabled" ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f83"), "name" : "Half-Life Deathmatch: Source", "categories" : [ "Valve Anti-Cheat enabled" ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f84"), "name" : "Half-Life 2: Episode One", "categories" : [ "Steam Achievements", "Steam Cloud" ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f85"), "name" : "Half-Life 2: Episode Two", "categories" : [ "Steam Achievements", "Steam Cloud" ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f86"), "name" : "Portal", "categories" : [ "Steam Achievements" ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f87"), "name" : "Team Fortress 2", "categories" : [ "Steam Achievements", "Steam Trading Cards", "Steam Workshop", "Valve Anti-Cheat enabled" ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f88"), "name" : "Left 4 Dead 2", "categories" : [ "Steam Achievements", "Steam Trading Cards", "Steam Workshop", "Steam Cloud", "Valve Anti-Cheat enabled" ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f89"), "name" : "Dota 2", "categories" : [ "Steam Trading Cards", "Steam Workshop", "SteamVR Collectibles", "Valve Anti-Cheat enabled" ] }
+{ "_id" : ObjectId("6198123a54a63ee964683f8a"), "name" : "Left 4 Dead", "categories" : [ "Steam Achievements", "Steam Cloud", "Valve Anti-Cheat enabled", "Steam Leaderboards" ] }
+...
+
+- Return the number of games published by each publisher and their name, sorted in descending order by the same number.
+> db.games.aggregate([ {$match: {publisher: {$exists: true}}}, {$group: {_id: "$publisher", count: {$sum: 1}}}, {$sort: {count: -1}} ])
+{ "_id" : "Big Fish Games", "count" : 213 }
+{ "_id" : "Strategy First", "count" : 136 }
+{ "_id" : "Ubisoft", "count" : 111 }
+{ "_id" : "Square Enix", "count" : 99 }
+{ "_id" : "THQ Nordic", "count" : 98 }
+{ "_id" : "Sekai Project", "count" : 96 }
+{ "_id" : "Choice of Games", "count" : 94 }
+{ "_id" : "Dagestan Technology", "count" : 91 }
+{ "_id" : "1C Entertainment", "count" : 89 }
+{ "_id" : "SEGA", "count" : 78 }
+{ "_id" : "Degica", "count" : 77 }
+{ "_id" : "Slitherine Ltd.", "count" : 73 }
+{ "_id" : "Plug In Digital", "count" : 72 }
+{ "_id" : "KISS ltd", "count" : 71 }
+{ "_id" : "KOEI TECMO GAMES CO., LTD.", "count" : 71 }
+{ "_id" : "AGM PLAYISM", "count" : 69 }
+{ "_id" : "Artifex Mundi", "count" : 67 }
+{ "_id" : "Buka Entertainment", "count" : 66 }
+{ "_id" : "Devolver Digital", "count" : 65 }
+{ "_id" : "Atriagames", "count" : 64 }
+...
+
+- Return the name of the games where the mean number of owners (between the minimum and maximum) is greater than 15000000.
+> db.games.aggregate([
+    {
+        $project: {
+            name: 1,
+            mean_owners: {
+                $avg: [
+                    {
+                        $toInt: {
+                            $arrayElemAt: [ {$split: ["$owners", "-"]}, 0 ]
+                        }
+                    },
+                    {
+                        $toInt: {
+                            $arrayElemAt: [ {$split: ["$owners", "-"]}, 1 ]
+                        }
+                    }
+                ]
+            }
+        }
+    },
+    {
+        $match: {
+            mean_owners: {
+                $gt: 15000000
+            }
+        }
+    }
+])
+{ "_id" : ObjectId("6198123a54a63ee964683f87"), "name" : "Team Fortress 2", "mean_owners" : 35000000 }
+{ "_id" : ObjectId("6198123a54a63ee964683f89"), "name" : "Dota 2", "mean_owners" : 150000000 }
+{ "_id" : ObjectId("6198123a54a63ee964683f8d"), "name" : "Counter-Strike: Global Offensive", "mean_owners" : 75000000 }
+{ "_id" : ObjectId("6198123a54a63ee9646845d9"), "name" : "Warframe", "mean_owners" : 35000000 }
+{ "_id" : ObjectId("6198123a54a63ee964684c99"), "name" : "Unturned", "mean_owners" : 35000000 }
+{ "_id" : ObjectId("6198123a54a63ee9646871a4"), "name" : "PLAYERUNKNOWN'S BATTLEGROUNDS", "mean_owners" : 75000000 }
+
+- Return the name, number of reviews and rating ratio of the games with an Overwhelmingly Positive rating (rating ratio greater than 95% and 500 or more reviews), sorted in descending order by that ratio.
+> db.games.aggregate([
+    {
+        $project: {
+            name: 1,
+            n_reviews: {
+                $sum: ["$positive_ratings", "$negative_ratings"]
+            },
+            rating: {
+                $divide: [
+                    "$positive_ratings",
+                    {
+                        $sum: ["$positive_ratings", "$negative_ratings"]
+                    }
+                ]
+            }
+        }
+    },
+    {
+        $match: {
+            n_reviews: {$gte: 500},
+            rating: {$gte: 0.95}
+        }
+    },
+    {
+        $sort: {rating: -1}
+    }
+])
+{ "_id" : ObjectId("6198123b54a63ee964689a89"), "name" : "Sabbat of the Witch", "n_reviews" : 523, "rating" : 0.9961759082217974 }
+{ "_id" : ObjectId("6198123a54a63ee96468775a"), "name" : "planetarian HD", "n_reviews" : 937, "rating" : 0.9893276414087513 }
+{ "_id" : ObjectId("6198123a54a63ee96468876a"), "name" : "東方天空璋 ～ Hidden Star in Four Seasons.", "n_reviews" : 4167, "rating" : 0.9872810175185985 }
+{ "_id" : ObjectId("6198123a54a63ee964687521"), "name" : "Monolith", "n_reviews" : 529, "rating" : 0.9867674858223062 }
+{ "_id" : ObjectId("6198123a54a63ee964683f8b"), "name" : "Portal 2", "n_reviews" : 140111, "rating" : 0.9865035578933845 }
+{ "_id" : ObjectId("6198123a54a63ee964685d17"), "name" : "Factorio", "n_reviews" : 48641, "rating" : 0.9851359963816534 }
+{ "_id" : ObjectId("6198123a54a63ee964685b53"), "name" : "TY the Tasmanian Tiger", "n_reviews" : 1702, "rating" : 0.9847238542890717 }
+{ "_id" : ObjectId("6198123a54a63ee9646858d2"), "name" : "TSIOQUE", "n_reviews" : 517, "rating" : 0.9845261121856866 }
+{ "_id" : ObjectId("6198123a54a63ee96468463e"), "name" : "Blackwell Epiphany", "n_reviews" : 511, "rating" : 0.9843444227005871 }
+{ "_id" : ObjectId("6198123a54a63ee964687d7a"), "name" : "AMID EVIL", "n_reviews" : 592, "rating" : 0.9831081081081081 }
+{ "_id" : ObjectId("6198123a54a63ee964685dc4"), "name" : "Epic Battle Fantasy 5", "n_reviews" : 1092, "rating" : 0.9826007326007326 }
+{ "_id" : ObjectId("6198123a54a63ee964684868"), "name" : "One Finger Death Punch", "n_reviews" : 14437, "rating" : 0.9822677841656854 }
+{ "_id" : ObjectId("6198123a54a63ee964685070"), "name" : "Finding Paradise", "n_reviews" : 6701, "rating" : 0.9816445306670646 }
+{ "_id" : ObjectId("6198123b54a63ee964689bea"), "name" : "NEKOPARA Extra", "n_reviews" : 1556, "rating" : 0.9813624678663239 }
+{ "_id" : ObjectId("6198123a54a63ee964685cd2"), "name" : "Iron Snout", "n_reviews" : 14166, "rating" : 0.9804461386418184 }
+{ "_id" : ObjectId("6198123a54a63ee964688646"), "name" : "Baba Is You", "n_reviews" : 1326, "rating" : 0.9803921568627451 }
+{ "_id" : ObjectId("6198123a54a63ee964685137"), "name" : "Keep Talking and Nobody Explodes", "n_reviews" : 5860, "rating" : 0.9803754266211604 }
+{ "_id" : ObjectId("6198123a54a63ee964685c67"), "name" : "OneShot", "n_reviews" : 11205, "rating" : 0.9803659080767515 }
+{ "_id" : ObjectId("6198123a54a63ee96468476a"), "name" : "A Hat in Time", "n_reviews" : 14311, "rating" : 0.9795961148766683 }
+{ "_id" : ObjectId("6198123a54a63ee964683f86"), "name" : "Portal", "n_reviews" : 52881, "rating" : 0.9795767856129801 }
+...
+
+- Return the number of games for each of the following boundaries pertaining to their average playtimes: [0, 10), [10, 50), [50, 150), [150, 500), [500, 1000), [1000, 5000), [5000, 100000).
+> db.games.aggregate([{$bucket: {groupBy: "$average_playtime", boundaries: [ 0, 10, 50, 150, 500, 1000, 5000, 100000 ], default: "Others", output: {count: { $sum: 1 }}}}])
+{ "_id" : 0, "count" : 21449 }
+{ "_id" : 10, "count" : 701 }
+{ "_id" : 50, "count" : 981 }
+{ "_id" : 150, "count" : 2816 }
+{ "_id" : 500, "count" : 538 }
+{ "_id" : 1000, "count" : 484 }
+{ "_id" : 5000, "count" : 105 }
+{ "_id" : "Others", "count" : 260 }
+
+- Return the number of games associated with each "steamspy" tag, sorted by that number in descending order.
+> db.games.aggregate([{$unwind: "$steamspy_tags"}, {$sortByCount: "$steamspy_tags"}])
+{ "_id" : "Indie", "count" : 16232 }
+{ "_id" : "Action", "count" : 10322 }
+{ "_id" : "Casual", "count" : 8205 }
+{ "_id" : "Adventure", "count" : 7770 }
+{ "_id" : "Strategy", "count" : 4173 }
+{ "_id" : "Simulation", "count" : 3284 }
+{ "_id" : "Early Access", "count" : 2967 }
+{ "_id" : "RPG", "count" : 2785 }
+{ "_id" : "Free to Play", "count" : 1662 }
+{ "_id" : "Puzzle", "count" : 1116 }
+{ "_id" : "VR", "count" : 961 }
+{ "_id" : "Sports", "count" : 781 }
+{ "_id" : "Racing", "count" : 765 }
+{ "_id" : "Platformer", "count" : 648 }
+{ "_id" : "Nudity", "count" : 570 }
+{ "_id" : "Sexual Content", "count" : 557 }
+{ "_id" : "Visual Novel", "count" : 546 }
+{ "_id" : "Violent", "count" : 545 }
+{ "_id" : "Anime", "count" : 538 }
+{ "_id" : "Horror", "count" : 493 }
+...
