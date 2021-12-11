@@ -1,0 +1,234 @@
+# Following code was ran with Datagrip
+
+CREATE KEYSPACE IF NOT EXISTS sandbox WITH REPLICATION = {'class': 'SimpleStrategy', 'replication_factor': 3};
+
+USE sandbox;
+
+CREATE TABLE IF NOT EXISTS users (
+    uuid varchar,
+    name varchar,
+    points int,
+
+    PRIMARY KEY (uuid, name)
+);
+
+INSERT INTO users (uuid, name, points) VALUES ('0', 'nit', 100);
+INSERT INTO users (uuid, name, points) VALUES ('1', 'air', 50);
+INSERT INTO users (uuid, name, points) VALUES ('2', 'cassandro', 0);
+
+SELECT * FROM users;
+
+# The following commands were issued with cqlsh
+
+cqlsh:sandbox> SELECT * from users;
+
+ uuid | name      | points
+------+-----------+--------
+    0 |       nit |    100
+    2 | cassandro |      0
+    1 |       air |     50
+
+(3 rows)
+cqlsh:sandbox> SELECT name from users;
+
+ name
+-----------
+       nit
+ cassandro
+       air
+
+(3 rows)
+
+## Single quotes have to be used to define values, not double quotes.
+## If single quotes are present in the value itself (for example, in a text value) then the value can be enclosed in double dollar signs ($$).
+
+cqlsh:sandbox> SELECT * from users where name=nit;
+SyntaxException: line 1:34 no viable alternative at input ';' (...* from users where name=[nit];)
+cqlsh:sandbox> SELECT * from users where name="nit" ;
+SyntaxException: line 1:37 no viable alternative at input ';' (...* from users where name=["ni]t" ;)
+cqlsh:sandbox> SELECT * from users where uuid=0 ;
+InvalidRequest: Error from server: code=2200 [Invalid query] message="Invalid INTEGER constant (0) for "uuid" of type text"
+cqlsh:sandbox> SELECT * from users where uuid="0" ;
+SyntaxException: line 1:35 no viable alternative at input ';' (...* from users where uuid=["]0" ;)
+cqlsh:sandbox> SELECT * from users where uuid='0' ;
+
+ uuid | name | points
+------+------+--------
+    0 |  nit |    100
+
+(1 rows)
+
+## Columns that aren't part of the clustering key, in this case 'points'.
+
+cqlsh:sandbox> SELECT * from users where name='nit' ;
+InvalidRequest: Error from server: code=2200 [Invalid query] message="Cannot execute this query as it might involve data filtering and thus may have unpredictable performance. If you want to execute this query despite the performance unpredictability, use ALLOW FILTERING"
+cqlsh:sandbox> SELECT * from users where name='nit' allow filtering;
+
+ uuid | name | points
+------+------+--------
+    0 |  nit |    100
+
+(1 rows)
+
+## All the elements from the PRIMARY KEY must be specified in an UPDATE statement.
+
+cqlsh:sandbox> UPDATE users set points=25 where uuid='2';
+InvalidRequest: Error from server: code=2200 [Invalid query] message="Some clustering keys are missing: name"
+cqlsh:sandbox> select points from users;
+
+ points
+--------
+    100
+     25
+      0
+     50
+
+(4 rows)
+cqlsh:sandbox> select * from users;
+
+ uuid | name      | points
+------+-----------+--------
+    0 |       nit |    100
+    2 |  cassadro |     25
+    2 | cassandro |      0
+    1 |       air |     50
+
+(4 rows)
+
+cqlsh:sandbox> UPDATE users SET points=90 WHERE uuid='2' and name='cassandro';
+cqlsh:sandbox> select sum(points) from users where uuid='2';
+
+ system.sum(points)
+--------------------
+                115
+
+(1 rows)
+
+cqlsh:sandbox> INSERT INTO users (uuid, name) VALUES ('0', 'woah');
+cqlsh:sandbox> select * from users;
+
+ uuid | name      | points
+------+-----------+--------
+    0 |       nit |    100
+    0 |      woah |   null
+    2 |  cassadro |     25
+    2 | cassandro |     90
+    1 |       air |     50
+
+## Descriptions
+
+cqlsh:sandbox> describe table users;
+
+CREATE TABLE sandbox.users (
+    uuid text,
+    name text,
+    points int,
+    PRIMARY KEY (uuid, name)
+) WITH CLUSTERING ORDER BY (name ASC)
+    AND additional_write_policy = '99p'
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND cdc = false
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '16', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND extensions = {}
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99p';
+
+cqlsh:sandbox> describe keyspace sandbox;
+
+CREATE KEYSPACE sandbox WITH replication = {'class': 'SimpleStrategy', 'replication_factor': '3'}  AND durable_writes = true;
+
+CREATE TABLE sandbox.users (
+    uuid text,
+    name text,
+    points int,
+    PRIMARY KEY (uuid, name)
+) WITH CLUSTERING ORDER BY (name ASC)
+    AND additional_write_policy = '99p'
+    AND bloom_filter_fp_chance = 0.01
+    AND caching = {'keys': 'ALL', 'rows_per_partition': 'NONE'}
+    AND cdc = false
+    AND comment = ''
+    AND compaction = {'class': 'org.apache.cassandra.db.compaction.SizeTieredCompactionStrategy', 'max_threshold': '32', 'min_threshold': '4'}
+    AND compression = {'chunk_length_in_kb': '16', 'class': 'org.apache.cassandra.io.compress.LZ4Compressor'}
+    AND crc_check_chance = 1.0
+    AND default_time_to_live = 0
+    AND extensions = {}
+    AND gc_grace_seconds = 864000
+    AND max_index_interval = 2048
+    AND memtable_flush_period_in_ms = 0
+    AND min_index_interval = 128
+    AND read_repair = 'BLOCKING'
+    AND speculative_retry = '99p';
+
+## Update statements that increment values, for example in an integer type, are not supported.
+## This is only possible on counter types. However, changing the type of a column is no longer supported, and a new counter column can't be added.
+## In order to have a counter column, a table has to be created from scratch with a column of that type.
+
+cqlsh:sandbox> ALTER TABLE users ALTER points TYPE counter;
+InvalidRequest: Error from server: code=2200 [Invalid query] message="Altering column types is no longer supported"
+
+cqlsh:sandbox> UPDATE users USING TTL 400 set points=-10 where uuid='0' and name='woah';
+cqlsh:sandbox> select ttl(points) from users;
+
+ ttl(points)
+-------------
+        null
+         396
+        null
+        null
+        null
+
+(5 rows)
+
+cqlsh:sandbox> ALTER TABLE users ADD last_play timestamp;
+cqlsh:sandbox> UPDATE users SET last_play=toTimestamp(now()), points=200 WHERE uuid='0' and name='nit';
+cqlsh:sandbox> select * from users;
+
+ uuid | name      | last_play                       | points
+------+-----------+---------------------------------+--------
+    0 |       nit | 2021-12-02 10:19:41.236000+0000 |    200
+    0 |      woah |                            null |    -10
+    2 |  cassadro |                            null |     25
+    2 | cassandro |                            null |     90
+    1 |       air |                            null |     50
+
+## The rectangular brackets '[' and ']' can be used for specifying any type of collection (map, set or list).
+
+cqlsh:sandbox> ALTER TABLE users ADD pets list<text>;
+cqlsh:sandbox> UPDATE users SET pets=['dog', 'cat'] WHERE uuid='1' and name='air';
+cqlsh:sandbox> SELECT * FROM users;
+
+ uuid | name      | last_play                       | pets           | points
+------+-----------+---------------------------------+----------------+--------
+    0 |       nit | 2021-12-02 10:19:41.236000+0000 |           null |    200
+    0 |      woah |                            null |           null |    -10
+    2 |  cassadro |                            null |           null |     25
+    2 | cassandro |                            null |           null |     90
+    1 |       air |                            null | ['dog', 'cat'] |     50
+
+(5 rows)
+cqlsh:sandbox> UPDATE users SET pets=pets+'lizard' WHERE uuid='2' and name='cassadro';
+InvalidRequest: Error from server: code=2200 [Invalid query] message="Invalid STRING constant (lizard) for "pets" of type list<text>"
+cqlsh:sandbox> UPDATE users SET pets=pets+['lizard'] WHERE uuid='2' and name='cassadro';
+cqlsh:sandbox> UPDATE users SET pets[1]='bird' WHERE uuid='1' and name='air';
+cqlsh:sandbox> select * from users;
+
+ uuid | name      | last_play                       | pets            | points
+------+-----------+---------------------------------+-----------------+--------
+    0 |       nit | 2021-12-02 10:19:41.236000+0000 |            null |    200
+    0 |      woah |                            null |            null |   null
+    2 |  cassadro |                            null |      ['lizard'] |     25
+    2 | cassandro |                            null |            null |     90
+    1 |       air |                            null | ['dog', 'bird'] |     50
+
+(5 rows)
+
