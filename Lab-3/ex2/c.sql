@@ -124,4 +124,4 @@ insert into tags_by_tag (video, tag) values ('Reactive disintermediate migration
 insert into tags_by_tag (video, tag) values ('Reactive disintermediate migration', 'Economy');
 insert into tags_by_tag (video, tag) values ('Multi-lateral fault-tolerant collaboration', 'Partnership');
 
-SELECT tag, count(*) FROM tags_by_tag GROUP BY tag;
+SELECT tag, count(*) as video_count FROM tags_by_tag GROUP BY tag;

@@ -64,7 +64,7 @@ CREATE TABLE event (
     event_time  timestamp,
     video_time  int,
 
-    PRIMARY KEY ((video, user), event, event_time)
+    PRIMARY KEY ((video, user), event_time)
 ) WITH CLUSTERING ORDER BY (event_time DESC);
 
 // 6.
