@@ -72,7 +72,7 @@ SELECT * FROM event WHERE video='Me at the zoo' and user='creative_bankruptcy_ar
 // 5. Added upload_time to PRIMARY KEY
 SELECT * FROM video_by_author WHERE author='man' and upload_time > '1970-01-19 02:05:45.766000+0000' and upload_time < '1970-01-19 21:25:57.317000+0000';
 
-// 6. Added WITH CLUSTERING ORDER BY (upload_time DESC)
+// ?? 6. Added WITH CLUSTERING ORDER BY (upload_time ASC)
 SELECT * FROM video_by_author LIMIT 10;
 
 // 7.
@@ -83,7 +83,8 @@ SELECT user FROM follower WHERE video='Front-line transitional Graphic Interface
 // gigantesca de dados introduzidos (mesmo para poucas statements de inserção) e maior complexidade. Isto é um problema
 // porque não é possível fazer JOIN de tabelas em Cassandra, uma vez que tal podia envolver juntar dados que estão em
 // diferentes nós, envolvendo uma coordenação entre nós e maior tempo de execução para que a query possa ser realizada,
-// não tirando qualquer partido da forma como Cassandra armazena os dados.
+// não tirando qualquer partido da forma como Cassandra armazena os dados. Isto apenas poderia ser realizado do lado
+// aplicacional, mas não é bem fazível simplesmente em CQL.
 
 // 9. Não é possível. A cláusula ORDER BY deve ser executada em atributos existentes na tabela, e não por atributos
 // criados durante a query (o 'score' final). Uma maneira de realizar esta query envolve uma maior complexidade e menor
@@ -91,7 +92,9 @@ SELECT user FROM follower WHERE video='Front-line transitional Graphic Interface
 // e a cada atualização dos valores os outros serão alterados consoantemente.
 SELECT sum(rat)/count(*) as score, video FROM rating GROUP BY video ORDER BY score DESC LIMIT 5;
 
-// 10. ???
+// 10. Não é possível. A cláusula ORDER BY requer a especificação da partition key na cláusula WHERE, e a CLUSTERING
+// ORDER especificada na criação da tabela apenas é aplicada a cada partição. O resultado da query abaixo é uma tabela
+// ordenada primeiro pela hash da partition key e depois pela ordem definida pela CLUSTERING ORDER.
 SELECT * FROM video_by_author;
 
 // 11.

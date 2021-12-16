@@ -23,7 +23,7 @@ CREATE TABLE video_by_author (
     upload_time     timestamp,
 
     PRIMARY KEY (author, upload_time, name)
-) WITH CLUSTERING ORDER BY (upload_time DESC);
+) WITH CLUSTERING ORDER BY (upload_time ASC);
 
 // 3.
 DROP TABLE IF EXISTS comment_by_video;
