@@ -89,12 +89,13 @@ SELECT user FROM follower WHERE video='Front-line transitional Graphic Interface
 // 9. Não é possível. A cláusula ORDER BY deve ser executada em atributos existentes na tabela, e não por atributos
 // criados durante a query (o 'score' final). Uma maneira de realizar esta query envolve uma maior complexidade e menor
 // eficiência: armazenar o atributo 'score' diretamente, com um contador do número de ratings total e a soma dos mesmos,
-// e a cada atualização dos valores os outros serão alterados consoantemente.
+// e a cada atualização dos valores os outros serão alterados consoantemente. Isto não tira propriamente partido do
+// modelo de dados em Cassandra, que é melhor em casos de mera inserção/append-only, com praticamente nenhumas remoções.
 SELECT sum(rat)/count(*) as score, video FROM rating GROUP BY video ORDER BY score DESC LIMIT 5;
 
 // 10. Não é possível. A cláusula ORDER BY requer a especificação da partition key na cláusula WHERE, e a CLUSTERING
 // ORDER especificada na criação da tabela apenas é aplicada a cada partição. O resultado da query abaixo é uma tabela
-// ordenada primeiro pela hash da partition key e depois pela ordem definida pela CLUSTERING ORDER.
+// ordenada primeiro pela hash da partition key (ou outro método?) e depois pela ordem definida pela CLUSTERING ORDER.
 SELECT * FROM video_by_author;
 
 // 11.
