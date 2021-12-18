@@ -1,7 +1,0 @@
-2.d).10
-    Parece demasiado simples?
-2.d)
-    Pode-se abusar imenso e criar tabelas a torto e a direito (mesmo que pareça um pouco estúpido?)
-
-Geral
-    É viável pegar nos ids resultantes de uma query numa tabela para usar noutra tabela, de forma a obter informações que poderiam estar na primeira mas não estão por uma questão de duplicação massiva de dados? 
