@@ -28,7 +28,7 @@ restaurant_by_score_class
 ✓ Find the restaurants that got one or more scores in the interval [80, 100]
     + TABLE WITH score, score_class PARTITION KEY score_class/10 CLUSTERING KEY score
 
-restaurant_by_score_name_rid
+restaurant_by_score_rid_name
 ✓ Return the name, restaurant_id, and the sum of scores of the restaurants, ordered by the sum of scores in descending order
     + TABLE WITH name, restaurant_id, sum(score)
     ? INDEX ON sum(score) -> order in the application side
@@ -44,10 +44,35 @@ restaurant_grades
     + TABLE WITH id, restaurant_id, name, grades{score,grade,date} PARTITION KEY grades.grade CLUSTERING KEY grades.date
 
 restaurant_by_locality_zipcode
-✓ Return the id, name and locality of the second, third and fourth restaurants in 'Flatbush Avenue' with a zipcode greater than 10000, ordered by name in descending order
+✓ Return the id, name and locality of the second, third and fourth restaurants in street 'Flatbush Avenue' with a zipcode greater than 10000, ordered by name in descending order
     + TABLE WITH id, name, locality, zipcode PARTITION KEY locality CLUSTERING KEY zipcode
     ? INDEX ON name -> order in the application side
 */
+
+-- Exact copy. This entire structure isn't really useful for the necessary queries
+-- CREATE TYPE address (
+--     building        text,
+--     coord           tuple<float, float>,
+--     run             text,
+--     zipcode         text
+-- );
+--
+-- CREATE TYPE grade (
+--     grade       ascii,
+--     score       smallint,
+--     date        timestamp
+-- );
+--
+-- CREATE TABLE restaurant (
+--     address         address,
+--     localidade      text,
+--     gastronomia     text,
+--     grades          list<grade>,
+--     nome            text,
+--     restaurant_id   text,
+--
+--     PRIMARY KEY (restaurant_id, nome)
+-- );
 
 -- Main table
 DROP TABLE IF EXISTS restaurant_by_locality;
@@ -62,17 +87,18 @@ CREATE TABLE restaurant_by_locality (
 ) WITH CLUSTERING ORDER BY (name DESC);
 
 -- Specification of main table for the last query
-DROP TABLE IF EXISTS restaurant_by_locality_zipcode;
-CREATE TABLE restaurant_by_locality_zipcode (
+DROP TABLE IF EXISTS restaurant_by_street_zipcode;
+CREATE TABLE restaurant_by_street_zipcode (
     restaurant_id   text,
     name            text,
-    locality        text,
+    street          text,
     zipcode         int,
 
-    PRIMARY KEY (locality, zipcode, restaurant_id)
+    PRIMARY KEY (street, zipcode, restaurant_id)
 );
 
 -- Grades table
+-- The clustering order simulates the grades list order of each document present in 'retaurants.json'
 DROP TABLE IF EXISTS restaurant_grades;
 CREATE TABLE restaurant_grades (
     restaurant_id   text,
@@ -82,7 +108,7 @@ CREATE TABLE restaurant_grades (
     date            timestamp,
 
     PRIMARY KEY (grade, date, score, restaurant_id)
-) WITH CLUSTERING ORDER BY (date ASC);
+) WITH CLUSTERING ORDER BY (date DESC);
 
 -- Grades table by restaurant_id
 DROP TABLE IF EXISTS restaurant_grades_by_rid;
@@ -94,7 +120,7 @@ CREATE TABLE restaurant_grades_by_rid (
     date            timestamp,
 
     PRIMARY KEY (restaurant_id, date, grade, score)
-) WITH CLUSTERING ORDER BY (date ASC);
+) WITH CLUSTERING ORDER BY (date DESC);
 
 -- Score class (intervals of 10)
 DROP TABLE IF EXISTS restaurant_by_score_class;
@@ -103,24 +129,27 @@ CREATE TABLE restaurant_by_score_class (
     name            text,
     score_class     int,
     score           smallint,
+    date            timestamp,
 
-    PRIMARY KEY (score_class, score, restaurant_id)
+    PRIMARY KEY (score_class, score, date, restaurant_id)
 ) WITH CLUSTERING ORDER BY (score ASC);
 
 -- Score by name, rid
-DROP TABLE IF EXISTS restaurant_by_score_name_rid;
-CREATE TABLE restaurant_by_score_name_rid (
+DROP TABLE IF EXISTS restaurant_by_score_rid_name;
+CREATE TABLE restaurant_by_score_rid_name (
     restaurant_id   text,
     name            text,
     score           smallint,
+    date            timestamp,
 
-    PRIMARY KEY (name, restaurant_id)
+    PRIMARY KEY (restaurant_id, name, date)
 );
 
 -- Latitude class (intervals of 15)
 DROP TABLE IF EXISTS restaurant_by_latitude_class;
 CREATE TABLE restaurant_by_latitude_class (
     restaurant_id   text,
+    name            text,
     latitude_class  int,
     latitude        float,
 

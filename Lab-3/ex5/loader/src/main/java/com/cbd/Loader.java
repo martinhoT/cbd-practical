@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.Scanner;
 
+// Load all the files from 'restaurants.json' into the database
 public class Loader
 {
     public static void main( String[] args ) throws IOException {
@@ -33,10 +34,10 @@ public class Loader
                             "restaurant_id", literal(restaurant.getRestaurant_id())
                     ))
                     .build());
-            session.execute(insertInto("restaurant_by_locality_zipcode")
+            session.execute(insertInto("restaurant_by_street_zipcode")
                     .values(Map.of(
                             "name", literal(restaurant.getNome()),
-                            "locality", literal(restaurant.getLocalidade()),
+                            "street", literal(restaurant.getAddress().getRua()),
                             "zipcode", literal(restaurant.getAddress().getZipcode()),
                             "restaurant_id", literal(restaurant.getRestaurant_id())
                     ))
@@ -65,21 +66,24 @@ public class Loader
                                 "restaurant_id", literal(restaurant.getRestaurant_id()),
                                 "name", literal(restaurant.getNome()),
                                 "score_class", literal(grade.getScore()/10),
-                                "score", literal(grade.getScore())
+                                "score", literal(grade.getScore()),
+                                "date", literal(grade.getDate())
                         ))
                         .build());
-                session.execute(insertInto("restaurant_by_score_name_rid")
+                session.execute(insertInto("restaurant_by_score_rid_name")
                         .values(Map.of(
                                 "restaurant_id", literal(restaurant.getRestaurant_id()),
                                 "name", literal(restaurant.getNome()),
-                                "score", literal(grade.getScore())
+                                "score", literal(grade.getScore()),
+                                "date", literal(grade.getDate())
                         ))
                         .build());
             }
             session.execute(insertInto("restaurant_by_latitude_class")
                     .values(Map.of(
                             "restaurant_id", literal(restaurant.getRestaurant_id()),
-                            "latitude_class", literal( ((int)Math.floor(restaurant.getAddress().getCoord().get(0)))/15),
+                            "name", literal(restaurant.getNome()),
+                            "latitude_class", literal( ((int)Math.floor(restaurant.getAddress().getCoord().get(0))+180)/15 - 12),
                             "latitude", literal(restaurant.getAddress().getCoord().get(0))
                     ))
                     .build());

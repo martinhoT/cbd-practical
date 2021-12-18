@@ -51,10 +51,10 @@ SELECT JSON name, gastronomy, locality FROM restaurant_by_locality;
 -- 19. Count the total of restaurants in each locality
 SELECT JSON locality, count(*) FROM restaurant_by_locality GROUP BY locality;
 
--- 27. Return the name and locality of the second, third and fourth restaurants in 'Flatbush Avenue' with a zipcode greater than 10000, ordered by name in descending order
-SELECT JSON name, locality FROM restaurant_by_locality_zipcode WHERE locality='Flatbush Avenue' and zipcode > 10000;
--- Application side: order by name in descending order
+-- 27. Return the name and locality of the second, third and fourth restaurants in street 'Flatbush Avenue' with a zipcode greater than 10000, ordered by name in descending order
+SELECT JSON name, street FROM restaurant_by_street_zipcode WHERE street='Flatbush Avenue' and zipcode > 10000;
+-- Application side: order by name in descending order and select the second, third and fourth
 
 -- 30. Return the name, restaurant_id, and the sum of scores of the restaurants, ordered by the sum of scores in descending order
-SELECT JSON name, restaurant_id, sum(score) as score_sum FROM restaurant_by_score_name_rid GROUP BY name, restaurant_id;
+SELECT JSON name, restaurant_id, sum(score) as score_sum FROM restaurant_by_score_rid_name GROUP BY restaurant_id;
 -- Application side: order by score_sum in descending order
