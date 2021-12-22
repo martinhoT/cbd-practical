@@ -18,6 +18,8 @@ public class App
 
         // Insertion
         System.out.println("\nInsertion");
+        System.out.println("    Before:");
+        printResult(session.execute(selectFrom("user").all().build()));
         query = insertInto("user").values(Map.of(
                 "username", literal("tortellini"),
                 "email", literal("childe@gmail.com"),
@@ -25,10 +27,18 @@ public class App
                 "register_time", literal(92512571)
         )).usingTtl(60).build();
         session.execute(query);
+        System.out.println("    After:");
+        printResult(session.execute(selectFrom("user").all().build()));
 
         // Editing
         // ? Slice restrictions are not supported on the clustering columns in UPDATE statements
         System.out.println("\nEditing");
+        System.out.println("    Before:");
+        printResult(session.execute(selectFrom("event").all()
+                .whereColumn("video").isEqualTo(literal("Front-line transitional Graphic Interface"))
+                .whereColumn("user").isEqualTo(literal("xX_alpha_Xx"))
+                .whereColumn("event_time").isEqualTo(literal("1970-01-18 15:53:13.614000+0000"))
+                .build()));
         query = update("event")
                 .setColumn("video_time", literal(0))
                 .whereColumn("video").isEqualTo(literal("Front-line transitional Graphic Interface"))
@@ -36,6 +46,12 @@ public class App
                 .whereColumn("event_time").isEqualTo(literal("1970-01-18 15:53:13.614000+0000"))
                 .build();
         session.execute(query);
+        System.out.println("    After:");
+        printResult(session.execute(selectFrom("event").all()
+                .whereColumn("video").isEqualTo(literal("Front-line transitional Graphic Interface"))
+                .whereColumn("user").isEqualTo(literal("xX_alpha_Xx"))
+                .whereColumn("event_time").isEqualTo(literal("1970-01-18 15:53:13.614000+0000"))
+                .build()));
 
         // Search
         System.out.println("\nSearch");

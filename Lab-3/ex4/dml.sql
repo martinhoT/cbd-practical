@@ -198,7 +198,7 @@ SELECT * FROM review WHERE awards['hilarious'] = 32;
 
 -- Update data
 UPDATE user SET alias = alias + ['chmad'] WHERE uname = 'chmanden';
-UPDATE game SET awards = awards + {'The Game Awards Most Anticipated Game 2020 & 2021'} WHERE title = 'Elden Ring';
+UPDATE game SET awards = awards + {'The Game Awards Most Anticipated Game 2020 & 2021'} WHERE developer = 'FromSoftware Inc.' and release_date ='2022-02-24' and title = 'Elden Ring';
 UPDATE user SET alias = [] WHERE uname = 'hyrancor';
 UPDATE user SET alias = alias - ['anthro'] WHERE uname = 'ANTROSPe';
 UPDATE review SET awards = awards + {'helpful': 1} WHERE game = 'OPUS: Echo of Starsong' and date_posted = '2021-09-01' and uname = 'hyrancor';
@@ -207,5 +207,5 @@ UPDATE review SET awards = awards + {'helpful': 1} WHERE game = 'OPUS: Echo of S
 DELETE alias[0] FROM user WHERE uname = 'ANTROSPe';
 DELETE awards['heartwarming'] FROM review WHERE game = 'Beat Saber' and date_posted = '2021-08-26' and uname = 'RIBlEThe';
 DELETE alias FROM user WHERE uname = 'd52a';
-DELETE developer, release_date FROM game WHERE title = 'Rocket League';
-DELETE awards FROM game WHERE title = 'Monster Hunter: World';
+DELETE FROM game WHERE developer = 'Psyonix LLC';
+DELETE awards FROM game WHERE developer = 'CAPCOM Co., Ltd.'  and release_date = '2018-08-09' and title = 'Monster Hunger: World';

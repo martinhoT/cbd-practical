@@ -34,7 +34,9 @@ SELECT tags FROM video_tags_by_name WHERE name='Me at the zoo';
 -- vídeo (múltiplas INSERT statements). Este problema existe porque a query abaixo não pode ser realizada, já que a
 -- partition key deve ser hashed para que se possa saber qual/quais nodes se devem pesquisar no cluster, para obter
 -- certos dados. Como a query está a avaliar a existência de um elemento num conjunto, é impossível obter todos os
--- hashes possíveis, ou prever quais são, de todos os conjuntos que possuem esse elemento.
+-- hashes possíveis, ou prever quais são, de todos os conjuntos que possuem esse elemento. Uma outra maneira é
+-- recorrendo a um índice secundário, mas costuma não ser a melhor opção por questões de desempenho (neste caso não dá
+-- porque 'tags' é um frozen set, podendo apenas ser comparado no seu todo).
 DROP TABLE IF EXISTS video_by_tags;
 CREATE TABLE video_by_tags (
     author          text,
@@ -136,8 +138,16 @@ insert into video_by_utime_class (author, name, upload_time_class, upload_time) 
 insert into video_by_utime_class (author, name, upload_time_class, upload_time) values ('man', 'Reactive disintermediate migration', 0, '1632357317');
 insert into video_by_utime_class (author, name, upload_time_class, upload_time) values ('xX_alpha_Xx', 'Multi-lateral fault-tolerant collaboration', 0, '1619384885');
 
+-- Obter classe mais recente:
+-- 1. obter data do vídeo mais antigo (última entrada de 'SELECT upload_time FROM video_by_utime_class WHERE upload_time_class=0')
+-- 2. calcular a classe através da diferença entre a data de hoje e a mais antiga (assume que na data de hoje, ou recentemente, há vídeos inseridos)
+-- Para obter o desejado tem de se pesquisar desde a maior classe até a menor até se encontrar 10 registos. Isto pode
+-- portanto envolver mais que uma query, e do lado aplicacional deve-se juntar os resultados). Por esta razão, mesmo
+-- esta solução não é nada ideal, a não ser que não haja buracos temporais onde vídeos não tenham sido registados.
 -- 6.
-SELECT author, name, upload_time FROM video_by_utime_class WHERE upload_time_class=0 LIMIT 10;
+SELECT author, name, upload_time FROM video_by_utime_class WHERE upload_time_class=123456789 LIMIT 10;
+-- ...
+SELECT author, name, upload_time FROM video_by_utime_class WHERE upload_time_class=0 LIMIT 9;
 
 -- 7.
 SELECT user FROM follower WHERE video='Front-line transitional Graphic Interface';
@@ -159,7 +169,7 @@ SELECT user FROM follower WHERE video='Front-line transitional Graphic Interface
 
 -- 10. Não é possível. A cláusula ORDER BY requer a especificação da partition key na cláusula WHERE, e a CLUSTERING
 -- ORDER especificada na criação da tabela apenas é aplicada a cada partição. O resultado da query abaixo é uma tabela
--- ordenada primeiro pela hash/toker da partition key (ou outro método?) e depois pela ordem definida pela CLUSTERING
+-- ordenada primeiro pela hash/token da partition key (ou outro método?) e depois pela ordem definida pela CLUSTERING
 -- ORDER. Abaixo está apresentado o resultado normal, e nota-se que não está ordenado completamente pela CLUSTERING KEY
 -- especificada na CLUSTERING ORDER, visto que múltiplas partições são apresentadas.
 -- 10.
