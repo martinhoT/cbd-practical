@@ -1,0 +1,50 @@
+// NMEC: 98262
+
+#1
+MATCH (a:Person)-[:DIRECTED]->(m:Movie)<-[:ACTED_IN]-(a:Person) RETURN a.name AS name, m.title AS title
+
+#2
+MATCH (a:Person)-[:ACTED_IN]->(m:Movie) WHERE m.released > 2005 RETURN collect(a.name) AS actors, m.title AS title
+
+#3
+MATCH (n)--(m) WITH *, count(*) AS nRelations WHERE nRelations > 1 RETURN n, m, nRelations
+
+#4
+MATCH (p1:Person)-[:REVIEWED]->(m:Movie)<-[:REVIEWED]-(p2:Person) WHERE p1.name < p2.name RETURN p1.name AS name1, p2.name AS name2, m.title AS movie
+
+#5
+MATCH (a1:Person)-[:ACTED_IN]->(:Movie)<-[:ACTED_IN]-(a2:Person) WITH *, count(*) AS nMovies WHERE nMovies > 1 AND a1.name < a2.name RETURN a1.name, a2.name
+
+#6
+MATCH (a:Person)-[:ACTED_IN]->(m:Movie {title: 'Apollo 13'}) WITH m, avg(a.born) AS avgBorn RETURN m.released - avgBorn AS age
+
+#7
+MATCH (a:Person)-[:ACTED_IN]->(m:Movie) WITH m, m.released - avg(a.born) AS castAge RETURN m.title AS movie, round(castAge, 2) ORDER BY castAge DESC LIMIT 10
+
+#8
+CALL {MATCH (a:Person)-[:ACTED_IN]->(m:Movie) WITH m, m.released - avg(a.born) AS castAge RETURN m ORDER BY castAge ASC LIMIT 1} MATCH (a:Person)-[:ACTED_IN]->(m) RETURN a, m
+
+#9
+MATCH p = shortestpath((john:Person {name: 'John Cusack'})-[*]-(demi:Person {name: 'Demi Moore'})) RETURN p
+
+#10
+MATCH p = shortestpath((keanu:Person {name: 'Keanu Reeves'})-[*]-(tom:Person {name: 'Tom Cruise'})) RETURN length(p) AS dim
+
+#11
+MATCH p = shortestpath((jim:Person)-[*]-(kevin:Person)) WHERE jim.name STARTS WITH 'Jimi ' AND kevin.name STARTS WITH 'Kevin ' RETURN length(p) AS dim ORDER BY dim ASC LIMIT 1
+
+#12
+MATCH (p:Person)-[*2]-(jim:Person {name: 'Jim Cash'}) RETURN p
+Neste caso, nenhum dos nós que esta query retorna possui relações com outros nós Person diretamente, portanto neste caso acaba por ser o caminho mais curto entre Jim Cash e cada um dos outros nós (os caminho passam por filmes, portanto nunca poderia ser um nó 'Jim Cash').
+
+#13
+MATCH p = shortestpath((kevin:Person {name: 'Kevin Bacon'})-[r*]-(person:Person)) WHERE person.name <> 'Kevin Bacon' RETURN length(p) AS distance ORDER BY distance DESC LIMIT 1
+
+#14
+MATCH p = shortestpath((p1:Person)-[r*]-(p2:Person)) WHERE p1 <> p2 RETURN length(p) AS distance ORDER BY distance DESC LIMIT 1
+
+#15
+MATCH p = shortestpath((p1:Person)-[r*]-(p2:Person)) WHERE p1 < p2 RETURN length(p) AS distance, count(*) as nPairs ORDER BY distance ASC
+
+#16 (?DOUBT? média)
+MATCH p = (p1:Person)-[:ACTED_IN*10]-(p2:Person) WITH p1, p2, avg(length(p)) AS avgDistance WHERE p1 < p2 RETURN p1.name AS person1, p2.name AS person2 ORDER BY avgDistance ASC LIMIT 10
