@@ -1,0 +1,23 @@
+// NMEC: 98262
+
+#a)
+- Nodes (label: properties)
+Person: real_name
+Project: project_name
+Organization: organization
+
+- Relationships (node_start - [rel_label {properties}] -> node_end)
+Person - [WORKS_ON {num, svn_id, role_on_project}] -> Project
+Project - [BELONGS_TO] -> Organization
+
+#b)
+Person:
+LOAD CSV WITH HEADERS FROM 'file:///git_selection.csv' AS row WITH row.real_name AS real_name MERGE (p:Person {name: real_name})
+
+Project:
+LOAD CSV WITH HEADERS FROM 'file:///git_selection.csv' AS row WITH row.project_name AS project_name MERGE (p:Project {name: project_name})
+
+Organization:
+LOAD CSV WITH HEADERS FROM 'file:///git_selection.csv' AS row WITH row.organization AS organization MERGE (o:Organization {name: organization})
+
+WORKS_ON:

@@ -1,5 +1,7 @@
 // NMEC: 98262
 
+#NOTE: use ACTOR label, it exists! (?)
+
 #1
 MATCH (a:Person)-[:DIRECTED]->(m:Movie)<-[:ACTED_IN]-(a:Person) RETURN a.name AS name, m.title AS title
 
@@ -10,10 +12,10 @@ MATCH (a:Person)-[:ACTED_IN]->(m:Movie) WHERE m.released > 2005 RETURN collect(a
 MATCH (n)--(m) WITH *, count(*) AS nRelations WHERE nRelations > 1 RETURN n, m, nRelations
 
 #4
-MATCH (p1:Person)-[:REVIEWED]->(m:Movie)<-[:REVIEWED]-(p2:Person) WHERE p1.name < p2.name RETURN p1.name AS name1, p2.name AS name2, m.title AS movie
+MATCH (p1:Person)-[:REVIEWED]->(m:Movie)<-[:REVIEWED]-(p2:Person) WHERE p1 < p2 RETURN p1.name AS name1, p2.name AS name2, m.title AS movie
 
 #5
-MATCH (a1:Person)-[:ACTED_IN]->(:Movie)<-[:ACTED_IN]-(a2:Person) WITH *, count(*) AS nMovies WHERE nMovies > 1 AND a1.name < a2.name RETURN a1.name, a2.name
+MATCH (a1:Person)-[:ACTED_IN]->(:Movie)<-[:ACTED_IN]-(a2:Person) WITH *, count(*) AS nMovies WHERE nMovies > 1 AND a1 < a2 RETURN a1.name, a2.name
 
 #6
 MATCH (a:Person)-[:ACTED_IN]->(m:Movie {title: 'Apollo 13'}) WITH m, avg(a.born) AS avgBorn RETURN m.released - avgBorn AS age
@@ -48,3 +50,6 @@ MATCH p = shortestpath((p1:Person)-[r*]-(p2:Person)) WHERE p1 < p2 RETURN length
 
 #16 (?DOUBT? média)
 MATCH p = (p1:Person)-[:ACTED_IN*10]-(p2:Person) WITH p1, p2, avg(length(p)) AS avgDistance WHERE p1 < p2 RETURN p1.name AS person1, p2.name AS person2 ORDER BY avgDistance ASC LIMIT 10
+
+#17
+#TODO
