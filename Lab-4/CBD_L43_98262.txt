@@ -1,23 +1,68 @@
 // NMEC: 98262
 
 #a)
-- Nodes (label: properties)
-Person: real_name
-Project: project_name
-Organization: organization
+Nodes (label: properties)
+    Person: real_name AS name
+    Project: project_name AS name
+    Organization: organization AS name
 
-- Relationships (node_start - [rel_label {properties}] -> node_end)
-Person - [WORKS_ON {num, svn_id, role_on_project}] -> Project
-Project - [BELONGS_TO] -> Organization
+Relationships (node_start - [rel_label {properties}] -> node_end)
+    Person - [WORKS_ON {num, svn_id, role_on_project AS role}] -> Project
+    Project - [BELONGS_TO] -> Organization
 
 #b)
-Person:
-LOAD CSV WITH HEADERS FROM 'file:///git_selection.csv' AS row WITH row.real_name AS real_name MERGE (p:Person {name: real_name})
+//Person:
+LOAD CSV WITH HEADERS FROM 'file:///git_selection.csv' AS row
+WITH row.real_name AS real_name
+MERGE (:Person {name: real_name});
 
-Project:
-LOAD CSV WITH HEADERS FROM 'file:///git_selection.csv' AS row WITH row.project_name AS project_name MERGE (p:Project {name: project_name})
+//Project:
+LOAD CSV WITH HEADERS FROM 'file:///git_selection.csv' AS row
+WITH row.project_name AS project_name
+MERGE (:Project {name: project_name});
 
-Organization:
-LOAD CSV WITH HEADERS FROM 'file:///git_selection.csv' AS row WITH row.organization AS organization MERGE (o:Organization {name: organization})
+//Organization:
+LOAD CSV WITH HEADERS FROM 'file:///git_selection.csv' AS row
+WITH row.organization AS organization
+MERGE (:Organization {name: organization});
 
-WORKS_ON:
+//WORKS_ON:
+(?DOUBT? o que é o num?)
+LOAD CSV WITH HEADERS FROM 'file:///git_selection.csv' AS row
+WITH row.real_name AS real_name, row.project_name AS project_name, row.num.toInteger() AS num, row.svn_id AS svn_id, row.role_on_project AS role
+MATCH (pe:Person {name: real_name})
+MATCH (pr:Project {name: project_name})
+MERGE (pe)-[:WORKS_ON {num: num, svn_id: svn_id, role: role}]->(pr);
+
+//BELONGS_TO:
+LOAD CSV WITH HEADERS FROM 'file:///git_selection.csv' AS row
+WITH row.project_name AS project_name, row.organization AS organization
+MATCH (pr:Project {name: project_name})
+MATCH (o:Organization {name: organization})
+MERGE (pr)-[:BELONGS_TO]->(o);
+
+#c)
+##1
+MATCH (n:Person) RETURN n;
+
+##2
+MATCH (n:Person) RETURN n.name;
+
+##3
+MATCH (n:Person)-[:WORKS_ON]->(p:Project) RETURN DISTINCT p;
+
+##4
+MATCH (n:Person-[:WORKS_ON]->(p:Project) WITH n, count(p) AS nProjects RETURN n, nProjects;
+
+##5
+MATCH (n:Person-[:WORKS_ON]->(p:Project) WITH n, count(p) AS nProjects RETURN n, nProjects ORDER BY nProjects DESC;
+
+##6
+MATCH (p:Project)<-[:WORKS_ON]-(n:Person) WITH p, count(n) as nPeople RETURN p, nPeople;
+
+##7
+MATCH (p:Project)<-[:WORKS_ON {role: 'Committer'}]-(n:Person) WITH p, count(n) as nPeople RETURN p, nPeople;
+
+##8
+
+##9
