@@ -100,13 +100,131 @@ RETURN p1.name AS person1, p2.name AS person2
 ORDER BY avgDistance ASC
 LIMIT 10;
 
-#17 (UNWIND)
+#17
+Apresente os atores que tiveram pelo menos uma role para personagens com o prefixo 'Dr.', em conjunto com a lista dessas roles para cada um.
+
+MATCH (p:Person)-[r:ACTED_IN]->(:Movie)
+UNWIND r.roles AS role
+WITH p, role
+WHERE role STARTS WITH 'Dr.'
+RETURN p AS actor, collect(role) AS roles;
+
+╒════════════════════════════════════════╤════════════════════════════════════════╕
+│"actor"                                 │"roles"                                 │
+╞════════════════════════════════════════╪════════════════════════════════════════╡
+│{"born":1948,"name":"Christopher Guest"}│["Dr. Stone"]                           │
+├────────────────────────────────────────┼────────────────────────────────────────┤
+│{"born":1956,"name":"Tom Hanks"}        │["Dr. Henry Goose","Dr. Robert Langdon"]│
+├────────────────────────────────────────┼────────────────────────────────────────┤
+│{"born":1963,"name":"Helen Hunt"}       │["Dr. Jo Harding"]                      │
+└────────────────────────────────────────┴────────────────────────────────────────┘
+
+#18
+Apresente o título dos filmes que foram analisados e uma tag dependendo das seguintes condições:
+- caso o filme tenha sido analisado por apenas analisadores com mais de 5 análises e esse analisador esteja a ser seguido por outros, apresenta a tag 'Complete'
+- se não, se o filme tiver sido analisado por pelo menos um analisador com 5 análises ou menos e esse analisador esteja a ser seguido por outros, apresenta a tag 'On review'
+- caso contrário, apresenta a tag 'Uncertain'.
+
+CALL {
+    MATCH (p:Person)-[:REVIEWED]->(mOther:Movie)
+    WITH p, count(mOther) AS pMovies
+    RETURN p, pMovies
+}
+MATCH
+(p)-[:REVIEWED]->(m:Movie)
+WITH m, p, pMovies, CASE
+        WHEN (:Person)-[:FOLLOWS]->(p) AND pMovies > 5 THEN 'Complete'
+        WHEN (:Person)-[:FOLLOWS]->(p) THEN 'On review'
+        ELSE 'Uncertain'
+    END AS tag
+WITH m, collect(tag) AS tags
+RETURN m AS movie, CASE
+        WHEN 'On review' IN tags THEN 'On review'
+        WHEN 'Uncertain' IN tags THEN 'Uncertain'
+        ELSE 'Complete'
+    END AS tag;
+
+╒══════════════════════════════════════════════════════════════════════╤═══════════╕
+│"movie"                                                               │"tag"      │
+╞══════════════════════════════════════════════════════════════════════╪═══════════╡
+│{"tagline":"Break The Codes","title":"The Da Vinci Code","released":20│"Uncertain"│
+│06}                                                                   │           │
+├──────────────────────────────────────────────────────────────────────┼───────────┤
+│{"tagline":"Pain heals, Chicks dig scars... Glory lasts forever","titl│"On review"│
+│e":"The Replacements","released":2000}                                │           │
+├──────────────────────────────────────────────────────────────────────┼───────────┤
+│{"tagline":"The rest of his life begins now.","title":"Jerry Maguire",│"Complete" │
+│"released":2000}                                                      │           │
+├──────────────────────────────────────────────────────────────────────┼───────────┤
+│{"tagline":"Everything is connected","title":"Cloud Atlas","released":│"Complete" │
+│2012}                                                                 │           │
+├──────────────────────────────────────────────────────────────────────┼───────────┤
+│{"tagline":"Come as you are","title":"The Birdcage","released":1996}  │"Complete" │
+├──────────────────────────────────────────────────────────────────────┼───────────┤
+│{"tagline":"It's a hell of a thing, killing a man","title":"Unforgiven│"Complete" │
+│","released":1992}                                                    │           │
+└──────────────────────────────────────────────────────────────────────┴───────────┘
+
+#19
+Apresente o analisador e a análise que efetuou se incluir a palavra 'fun'.
+
+MATCH (p:Person)-[r:REVIEWED]->()
+WHERE toLower(r.summary) =~ '.*\\bfun\\b.*'
+RETURN p AS reviewer, r AS review;
+
+╒═══════════════════════════╤═══════════════════════════════════════════════════════╕
+│"reviewer"                 │"review"                                               │
+╞═══════════════════════════╪═══════════════════════════════════════════════════════╡
+│{"name":"Jessica Thompson"}│{"summary":"Silly, but fun","rating":65}               │
+├───────────────────────────┼───────────────────────────────────────────────────────┤
+│{"name":"James Thompson"}  │{"summary":"Fun, but a little far fetched","rating":65}│
+└───────────────────────────┴───────────────────────────────────────────────────────┘
+
+#20
+Apresente os filmes cujo caminho mais curto entre eles, com tamanho entre 4 e 8 inclusivé, passa por pelo menos um dos filmes 'The Matrix' (incluindo sequelas).
+
+MATCH p=shortestpath((m1:Movie)-[*0..8]-(m2:Movie))
+WHERE m1 < m2
+WITH m1, m2, [m IN nodes(p) WHERE m.title STARTS WITH 'The Matrix' AND m <> m1 AND m <> m2] AS matrices, length(p) AS pathLength
+WHERE pathLength >= 4 AND size(matrices) > 0
+RETURN m1 AS movie1, m2 AS movie2;
+
+╒══════════════════════════════════════════════════════════════════════╤══════════════════════════════════════════════════════════════════════╕
+│"movie1"                                                              │"movie2"                                                              │
+╞══════════════════════════════════════════════════════════════════════╪══════════════════════════════════════════════════════════════════════╡
+│{"tagline":"Evil has its winning ways","title":"The Devil's Advocate",│{"tagline":"First loves last. Forever.","title":"Snow Falling on Cedar│
+│"released":1997}                                                      │s","released":1999}                                                   │
+├──────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────┤
+│{"tagline":"Evil has its winning ways","title":"The Devil's Advocate",│{"tagline":"Freedom! Forever!","title":"V for Vendetta","released":200│
+│"released":1997}                                                      │6}                                                                    │
+├──────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────┤
+│{"tagline":"Evil has its winning ways","title":"The Devil's Advocate",│{"tagline":"Speed has no limits","title":"Speed Racer","released":2008│
+│"released":1997}                                                      │}                                                                     │
+├──────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────┤
+│{"tagline":"Evil has its winning ways","title":"The Devil's Advocate",│{"tagline":"Prepare to enter a secret world of assassins","title":"Nin│
+│"released":1997}                                                      │ja Assassin","released":2009}                                         │
+├──────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────┤
+│{"tagline":"First loves last. Forever.","title":"Snow Falling on Cedar│{"tagline":"The hottest data on earth. In the coolest head in town","t│
+│s","released":1999}                                                   │itle":"Johnny Mnemonic","released":1995}                              │
+├──────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────┤
+│{"tagline":"The hottest data on earth. In the coolest head in town","t│{"tagline":"Freedom! Forever!","title":"V for Vendetta","released":200│
+│itle":"Johnny Mnemonic","released":1995}                              │6}                                                                    │
+├──────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────┤
+│{"tagline":"The hottest data on earth. In the coolest head in town","t│{"tagline":"Speed has no limits","title":"Speed Racer","released":2008│
+│itle":"Johnny Mnemonic","released":1995}                              │}                                                                     │
+├──────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────┤
+│{"tagline":"The hottest data on earth. In the coolest head in town","t│{"tagline":"Prepare to enter a secret world of assassins","title":"Nin│
+│itle":"Johnny Mnemonic","released":1995}                              │ja Assassin","released":2009}                                         │
+├──────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────┤
+│{"tagline":"Freedom! Forever!","title":"V for Vendetta","released":200│{"title":"Something's Gotta Give","released":2003}                    │
+│6}                                                                    │                                                                      │
+├──────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────┤
+│{"tagline":"Speed has no limits","title":"Speed Racer","released":2008│{"title":"Something's Gotta Give","released":2003}                    │
+│}                                                                     │                                                                      │
+├──────────────────────────────────────────────────────────────────────┼──────────────────────────────────────────────────────────────────────┤
+│{"tagline":"Prepare to enter a secret world of assassins","title":"Nin│{"title":"Something's Gotta Give","released":2003}                    │
+│ja Assassin","released":2009}                                         │                                                                      │
+└──────────────────────────────────────────────────────────────────────┴──────────────────────────────────────────────────────────────────────┘
 
 
-#18 (CASE)
 
-
-#19 (REGEX MATCH =~)
-
-
-#20 (LIST COMPREHENSION (??))
