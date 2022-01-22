@@ -7,7 +7,7 @@ Nodes (label: properties)
     Organization: organization AS name
 
 Relationships (node_start - [rel_label {properties}] -> node_end)
-    Person - [WORKS_ON {num, svn_id, role_on_project AS role}] -> Project
+    Person - [WORKS_ON {num... AS nums, svn_id, role_on_project... AS roles}] -> Project
     Project - [BELONGS_TO] -> Organization
 
 #b)
@@ -26,13 +26,12 @@ LOAD CSV WITH HEADERS FROM 'file:///git_selection.csv' AS row
 WITH row.organization AS organization
 MERGE (:Organization {name: organization});
 
-//WORKS_ON:
-(?DOUBT? o que é o num?)
+//WORKS_ON: (?DOUBT? o que é o num?)
 LOAD CSV WITH HEADERS FROM 'file:///git_selection.csv' AS row
-WITH row.real_name AS real_name, row.project_name AS project_name, row.num.toInteger() AS num, row.svn_id AS svn_id, row.role_on_project AS role
+WITH row.real_name AS real_name, row.project_name AS project_name, collect(row.num) AS nums, row.svn_id AS svn_id, collect(row.role_on_project) AS roles
 MATCH (pe:Person {name: real_name})
 MATCH (pr:Project {name: project_name})
-MERGE (pe)-[:WORKS_ON {num: num, svn_id: svn_id, role: role}]->(pr);
+MERGE (pe)-[:WORKS_ON {nums: nums, svn_id: svn_id, roles: roles}]->(pr);
 
 //BELONGS_TO:
 LOAD CSV WITH HEADERS FROM 'file:///git_selection.csv' AS row
@@ -43,26 +42,45 @@ MERGE (pr)-[:BELONGS_TO]->(o);
 
 #c)
 ##1
-MATCH (n:Person) RETURN n;
+MATCH (n:Person)
+RETURN n;
 
 ##2
-MATCH (n:Person) RETURN n.name;
+MATCH (n:Person)
+RETURN n.name;
 
 ##3
-MATCH (n:Person)-[:WORKS_ON]->(p:Project) RETURN DISTINCT p;
+MATCH (n:Person)-[:WORKS_ON]->(p:Project)
+RETURN DISTINCT p;
 
 ##4
-MATCH (n:Person-[:WORKS_ON]->(p:Project) WITH n, count(p) AS nProjects RETURN n, nProjects;
+MATCH (n:Person)-[:WORKS_ON]->(p:Project)
+WITH n, count(p) AS nProjects
+RETURN n, nProjects;
 
 ##5
-MATCH (n:Person-[:WORKS_ON]->(p:Project) WITH n, count(p) AS nProjects RETURN n, nProjects ORDER BY nProjects DESC;
+MATCH (n:Person)-[:WORKS_ON]->(p:Project)
+WITH n, count(p) AS nProjects
+RETURN n, nProjects
+ORDER BY nProjects DESC;
 
 ##6
-MATCH (p:Project)<-[:WORKS_ON]-(n:Person) WITH p, count(n) as nPeople RETURN p, nPeople;
+MATCH (p:Project)<-[:WORKS_ON]-(n:Person)
+WITH p, count(n) as nPeople
+RETURN p, nPeople;
 
 ##7
-MATCH (p:Project)<-[:WORKS_ON {role: 'Committer'}]-(n:Person) WITH p, count(n) as nPeople RETURN p, nPeople;
+MATCH (p:Project)<-[r:WORKS_ON]-(n:Person)
+WHERE 'Committer' IN r.roles
+WITH p, count(n) as nPeople
+RETURN p, nPeople;
 
 ##8
+MATCH (atm:Person)-[:WORKS_ON {svn_id: 'atm'}]->(p:Project)<-[:WORKS_ON]-(n:Person)
+RETURN atm.name AS atmName, n.name AS otherUserName, p.name AS projectName;
 
 ##9
+MATCH (atm:Person)-[atmR:WORKS_ON {svn_id: 'atm'}]->(p:Project)<-[nR:WORKS_ON]-(n:Person)
+WHERE 'PMC' IN atmR.roles AND 'Committer' IN nR.roles
+RETURN atm.name AS atmName, n.name AS otherUserName, p.name AS projectName;
+
