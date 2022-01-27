@@ -92,11 +92,11 @@ WHERE p1 < p2
 RETURN length(p) AS distance, count(*) as nPairs
 ORDER BY distance ASC;
 
-#16 (?DOUBT? média)
-MATCH p = (p1:Person)-[:ACTED_IN*10]-(p2:Person)
-WITH p1, p2, avg(length(p)) AS avgDistance
-WHERE p1 < p2
-RETURN p1.name AS person1, p2.name AS person2
+#16
+MATCH p = shortestPath((p1:Person)-[:ACTED_IN*0..50]-(p2:Person))
+WHERE p1 <> p2
+WITH p1, avg(length(p)) AS avgDistance
+RETURN p1.name AS person
 ORDER BY avgDistance ASC
 LIMIT 10;
 
@@ -225,6 +225,4 @@ RETURN m1 AS movie1, m2 AS movie2;
 │{"tagline":"Prepare to enter a secret world of assassins","title":"Nin│{"title":"Something's Gotta Give","released":2003}                    │
 │ja Assassin","released":2009}                                         │                                                                      │
 └──────────────────────────────────────────────────────────────────────┴──────────────────────────────────────────────────────────────────────┘
-
-
 

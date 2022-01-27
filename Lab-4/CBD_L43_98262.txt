@@ -26,7 +26,7 @@ LOAD CSV WITH HEADERS FROM 'file:///git_selection.csv' AS row
 WITH row.organization AS organization
 MERGE (:Organization {name: organization});
 
-//WORKS_ON: (?DOUBT? o que é o num?)
+//WORKS_ON:
 LOAD CSV WITH HEADERS FROM 'file:///git_selection.csv' AS row
 WITH row.real_name AS real_name, row.project_name AS project_name, collect(row.num) AS nums, row.svn_id AS svn_id, collect(row.role_on_project) AS roles
 MATCH (pe:Person {name: real_name})
