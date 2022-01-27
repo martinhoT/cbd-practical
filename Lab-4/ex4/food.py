@@ -1,6 +1,6 @@
-class Food:
+class FoodStats:
 
-    def ___init__(self,
+    def __init__(self,
 food_name,
 food_code,
 description,
@@ -113,59 +113,88 @@ manganese__mg_,
 selenium__µg_,
 iodine__µg_
 ):
-        self.name = food_name
+        food_all = [ s.strip() for s in food_name.split(',') ]
+        name = food_all[0]
+        characteristics = food_all[1:]
+
+        # Food node
+        self.name = name
+
+        # Variation node
+        self.characteristics = characteristics              # as RELATIONSHIP attributes to FOOD
         self.code = food_code
         self.description = description
-        self.group = group
-        self.sub_group = group__sub_class_
-        self.comments = comments
         self.description_footnote = description_footnote
-        self.energy_kcal = energy__kcal_
-        self.protein_g = protein__g_
-        self.carbohydrate_g = carbohydrate__g_
-        self.total_sugars_g = total_sugars__g_
-        self.starch_g = starch__g_
-        self.citric_acid_g = citric_acid__g_
-        self.malic_acid_g = malic_acid__g_
-        self.water_g = water__g_
-        self.total_nitrogen_g = total_nitrogen__g_
-        self.fat_g = fat__g_
-        self.oligosaccharide_g = oligosaccharide__g_
-        self.glucose_g = glucose__g_
-        self.galactose_g = galactose__g_
-        self.fructose_g = fructose__g_
-        self.sucrose_g = sucrose__g_
-        self.maltose_g = maltose__g_
-        self.lactose_g = lactose__g_
-        self.alcohol_g = alcohol__g_
-        self.nsp_g = nsp__g_
-        self.cholesterol_mg = cholesterol__mg_
-        self.retinol_ug = retinol__µg_
-        self.carotene_ug = carotene__µg_
-        self.retinol_equivalent_ug = retinol_equivalent__µg_
-        self. = vitamin_d__µg_
-        self. = vitamin_e__mg_
-        self. = vitamin_k1__µg_
-        self. = thiamin__mg_
-        self. = riboflavin__mg_
-        self. = niacin__mg_
-        self. = tryptophanby_60__mg_
-        self. = niacin_equivalent__mg_
-        self. = vitamin_b6__mg_
-        self. = vitamin_b12__µg_
-        self. = folate__µg_
-        self. = pantothenate__mg_
-        self. = biotin__µg_
-        self. = vitamin_c__mg_
-        self. = sodium__mg_
-        self. = potassium__mg_
-        self. = calcium__mg_
-        self. = magnesium__mg_
-        self. = phosphorus__mg_
-        self. = iron__mg_
-        self. = copper__mg_
-        self. = zinc__mg_
-        self. = chloride__mg_
-        self. = manganese__mg_
-        self. = selenium__µg_
-        self. = iodine__µg_
+        self.comments = comments
+        self.energy_kcal = float(energy__kcal_)
+        self.protein_g = float(protein__g_)
+        self.total_sugars_g = float(total_sugars__g_)
+        self.water_g = float(water__g_)
+        self.fat_g = float(fat__g_)
+        self.lactose_g = float(lactose__g_)
+        self.alcohol_g = float(alcohol__g_)
+        self.cholesterol_mg = float(cholesterol__mg_)
+
+        # Group node
+        self.group = group.strip()
+
+        # Sub-group node
+        self.sub_group = group__sub_class_
+
+class Food:
+
+    def __init__(self, stats: FoodStats):
+        self.name = stats.name
+    
+    def __hash__(self):
+        return hash(self.name)
+
+class Variation:
+
+    def __init__(self, stats: FoodStats):
+        self.characteristics = stats.characteristics
+        self.code = stats.code
+        self.description = stats.description
+        self.description_footnote = stats.description_footnote
+        self.comments = stats.comments
+        self.energy_kcal = stats.energy_kcal
+        self.protein_g = stats.protein_g
+        self.total_sugars_g = stats.total_sugars_g
+        self.water_g = stats.water_g
+        self.fat_g = stats.fat_g
+        self.lactose_g = stats.lactose_g
+        self.alcohol_g = stats.alcohol_g
+        self.cholesterol_mg = stats.cholesterol_mg
+
+        self._food = Food(stats)
+        self._sub_group = SubGroup(stats)
+
+    def __hash__(self):
+        return hash(self.code)
+    
+    def food(self) -> Food:
+        return self._food
+
+    def sub_group(self) -> 'SubGroup':
+        return self._sub_group
+
+class Group:
+
+    def __init__(self, stats: FoodStats):
+        self.name = stats.group
+
+    def __hash__(self):
+        return hash(self.name)
+
+class SubGroup:
+
+    def __init__(self, stats: FoodStats):
+        self.code = stats.sub_group
+        
+        self._group = Group(stats)
+    
+    def __hash__(self):
+        return hash(self.code)
+    
+    def group(self) -> Group:
+        return self._group
