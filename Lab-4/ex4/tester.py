@@ -17,5 +17,6 @@ class Tester(Connector):
         return result.single()[0]
     
 if __name__ == '__main__':
+    
     with Tester() as db:
         db.print_greeting('Boa Tarde!')

@@ -35,7 +35,7 @@ LIMIT 10;
 #2
 Apresente a menor distância do caminho mais curto entre comidas.
 
-MATCH p = shortestPath( (f1:Food)-[*0..10]-(f2:Food) )
+MATCH p = shortestPath( (f1:Food)-[*0..6]-(f2:Food) )
 WHERE f1 <> f2
 WITH min(length(p)) AS minDistance
 RETURN minDistance;
@@ -52,7 +52,7 @@ Apresente o código de todas as variações que foram estabelecidas com mais de 
 MATCH (v:Variation)
 WITH v, toIntegerOrNull( split(v.description, ' samples')[0] ) AS nSamples
 WHERE nSamples IS NOT null AND nSamples > 30
-RETURN v.code as variationCode, nSamples;
+RETURN v.code AS variationCode, nSamples;
 
 ╒═══════════════╤══════════╕
 │"variationCode"│"nSamples"│
@@ -148,7 +148,7 @@ CALL {
 WITH avgEnergy
 MATCH (f:Food)<-[:OF]-(v:Variation)-[:BELONGS_TO]->(:SubGroup)-[:PART_OF]->(:Group {name: 'Fruit'})
 WHERE v.energy_kcal > 2*avgEnergy
-RETURN DISTINCT f.name AS food
+RETURN DISTINCT f.name AS food;
 
 ╒═══════════════════╕
 │"food"             │
@@ -181,7 +181,7 @@ Apresente as comidas e as suas variantes que possuem uma nota extra (footnote).
 
 MATCH (v:Variation)-[:OF]->(f:Food)
 WHERE NOT isEmpty(v.description_footnote)
-RETURN f AS food, v.code AS variation, v.description_footnote AS note;
+RETURN f.name AS food, v.code AS variation, v.description_footnote AS note;
 
 ╒══════════════════════════════╤═══════════╤══════════════════════════════════════════════════════════════════════╕
 │"food"                        │"variation"│"note"                                                                │

@@ -73,24 +73,28 @@ class Loader(Connector):
             print()
 
         
-            
-    def create_group(self, tx: Transaction, group: Group):
+    
+    @staticmethod
+    def create_group(tx: Transaction, group: Group):
         tx.run("""
             MERGE (g:Group {name: $name})
             """, name=group.name)
     
-    def create_sub_group(self, tx: Transaction, sub_group: SubGroup):
+    @staticmethod
+    def create_sub_group(tx: Transaction, sub_group: SubGroup):
         tx.run("""
             MATCH (g:Group {name: $group_name})
             MERGE (sg:SubGroup {code: $subgroup_code})-[:PART_OF]->(g)
             """, group_name=sub_group.group().name, subgroup_code=sub_group.code)
 
-    def create_food(self, tx: Transaction, food: Food):
+    @staticmethod
+    def create_food(tx: Transaction, food: Food):
         tx.run("""
             MERGE (f:Food {name: $name})
             """, name=food.name)
 
-    def create_variation(self, tx: Transaction, variation: Variation):
+    @staticmethod
+    def create_variation(tx: Transaction, variation: Variation):
         tx.run("""
             MATCH (sg:SubGroup {code: $subgroup_code})
             MATCH (f:Food {name: $food_name})
