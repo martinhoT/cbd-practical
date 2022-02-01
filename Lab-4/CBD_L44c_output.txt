@@ -1,286 +1,131 @@
-// NMEC: 98262
-#1
-Apresente as 10 comidas com o maior número de variações, incluindo esse número no resultado, ordenado por ordem decrescente do mesmo.
+Query 1: Apresente as 10 comidas com o maior número de variações, incluindo esse número no resultado, ordenado por ordem decrescente do mesmo.
 
-MATCH (f:Food)<-[:OF]-(v:Variation)
-WITH f, count(v) AS nVariations
-RETURN f.name AS food, nVariations
-ORDER BY nVariations DESC
-LIMIT 10;
+food	|	nVariations
+---------------------------
+Lamb	|	27
+Beef	|	25
+Pork	|	15
+Cheese	|	13
+Chicken	|	12
+Yogurt	|	11
+Cream	|	10
+Melon	|	10
+Pizza	|	10
+Chips	|	10
 
-╒═════════╤═════════════╕
-│"food"   │"nVariations"│
-╞═════════╪═════════════╡
-│"Lamb"   │27           │
-├─────────┼─────────────┤
-│"Beef"   │25           │
-├─────────┼─────────────┤
-│"Pork"   │15           │
-├─────────┼─────────────┤
-│"Carrots"│14           │
-├─────────┼─────────────┤
-│"Cheese" │13           │
-├─────────┼─────────────┤
-│"Cabbage"│12           │
-├─────────┼─────────────┤
-│"Chicken"│12           │
-├─────────┼─────────────┤
-│"Yogurt" │11           │
-├─────────┼─────────────┤
-│"Chips"  │10           │
-├─────────┼─────────────┤
-│"Pizza"  │10           │
-└─────────┴─────────────┘
 
-#2
-Apresente a menor distância do caminho mais curto entre comidas.
+Query 2: Apresente a menor distância do caminho mais curto entre comidas.
 
-MATCH p = shortestPath( (f1:Food)-[*0..6]-(f2:Food) )
-WHERE f1 <> f2
-WITH min(length(p)) AS minDistance
-RETURN minDistance;
+minDistance
+-----------
+4
 
-╒═════════════╕
-│"minDistance"│
-╞═════════════╡
-│4            │
-└─────────────┘
 
-#3
-Apresente o código de todas as variações que foram estabelecidas com mais de 30 samples (análise da descrição).
+Query 3: Apresente o código de todas as variações que foram estabelecidas com mais de 30 samples (análise da descrição).
 
-MATCH (v:Variation)
-WITH v, toIntegerOrNull( split(v.description, ' samples')[0] ) AS nSamples
-WHERE nSamples IS NOT null AND nSamples > 30
-RETURN v.code AS variationCode, nSamples;
+variationCode	|	nSamples
+--------------------------------
+18-290	|	31
+17-128	|	40
+18-289	|	31
+11-556	|	39
+18-332	|	34
+14-301	|	60
+14-275	|	50
+18-141	|	33
+18-107	|	33
+19-322	|	50
 
-╒═══════════════╤══════════╕
-│"variationCode"│"nSamples"│
-╞═══════════════╪══════════╡
-│"17-128"       │40        │
-├───────────────┼──────────┤
-│"19-322"       │50        │
-├───────────────┼──────────┤
-│"18-289"       │31        │
-├───────────────┼──────────┤
-│"18-141"       │33        │
-├───────────────┼──────────┤
-│"18-107"       │33        │
-├───────────────┼──────────┤
-│"14-275"       │50        │
-├───────────────┼──────────┤
-│"18-332"       │34        │
-├───────────────┼──────────┤
-│"11-556"       │39        │
-├───────────────┼──────────┤
-│"18-290"       │31        │
-├───────────────┼──────────┤
-│"14-301"       │60        │
-└───────────────┴──────────┘
 
-#4
-Apresente a média de lactose dos iogurtes, arredondado às décimas.
+Query 4: Apresente a média de lactose dos iogurtes, arredondado às décimas.
 
-MATCH (f:Food {name: 'Yogurt'})<-[:OF]-(v:Variation)
-WITH f, avg(v.lactose_g) AS avgLactose
-RETURN round(avgLactose, 2) AS avgLactose;
+avgLactose
+----------
+4.02
 
-╒════════════╕
-│"avgLactose"│
-╞════════════╡
-│4.02        │
-└────────────┘
 
-#5
-Para cada grupo, apresente o número de variações frescas de comidas que engloba (se existirem).
+Query 5: Para cada grupo, apresente o número de variações frescas de comidas que engloba (se existirem).
 
-MATCH (:Food)<-[r:OF]-(v:Variation)-[:BELONGS_TO]->(:SubGroup)-[:PART_OF]->(g:Group)
-WHERE 'fresh' IN r.characteristics
-WITH g, count(v) AS nVariations
-RETURN g.name AS group, nVariations;
+group	|	nVariations
+---------------------------
+Cereals and cereal products	|	3
+Milk and milk products	|	7
+Nuts and seeds	|	1
+Herbs and spices	|	1
+Beverages	|	1
 
-╒═════════════════════════════╤═════════════╕
-│"group"                      │"nVariations"│
-╞═════════════════════════════╪═════════════╡
-│"Cereals and cereal products"│3            │
-├─────────────────────────────┼─────────────┤
-│"Nuts and seeds"             │1            │
-├─────────────────────────────┼─────────────┤
-│"Milk and milk products"     │7            │
-├─────────────────────────────┼─────────────┤
-│"Beverages"                  │1            │
-├─────────────────────────────┼─────────────┤
-│"Herbs and spices"           │1            │
-└─────────────────────────────┴─────────────┘
 
-#6
-Apresente todas as bebidas alcoólicas (incluindo a respetiva variante) com uma quantidade de álcool maior que 10g.
+Query 6: Apresente todas as bebidas alcoólicas (incluindo a respetiva variante) com uma quantidade de álcool maior que 10g.
 
-MATCH (f:Food)<-[:OF]-(v:Variation)-[:BELONGS_TO]->(:SubGroup)-[:PART_OF]->(:Group {name: 'Alcoholic beverages'})
-WHERE v.alcohol_g > 10
-RETURN f.name AS food, v.code AS variation;
+food	|	variation
+-------------------------
+Vermouth	|	17-239
+Sherry	|	17-237
+Sherry	|	17-235
+Sherry	|	17-236
+Port	|	17-234
+Advocaat	|	17-241
+White wine	|	17-233
 
-╒════════════╤═══════════╕
-│"food"      │"variation"│
-╞════════════╪═══════════╡
-│"Advocaat"  │"17-241"   │
-├────────────┼───────────┤
-│"Vermouth"  │"17-239"   │
-├────────────┼───────────┤
-│"White wine"│"17-233"   │
-├────────────┼───────────┤
-│"Sherry"    │"17-235"   │
-├────────────┼───────────┤
-│"Sherry"    │"17-236"   │
-├────────────┼───────────┤
-│"Sherry"    │"17-237"   │
-├────────────┼───────────┤
-│"Port"      │"17-234"   │
-└────────────┴───────────┘
 
-#7
-Apresente frutas com pelo menos uma variação com uma quantidade de calorias duas vezes maior que a média.
+Query 7: Apresente frutas com pelo menos uma variação com uma quantidade de calorias duas vezes maior que a média.
 
-CALL {
-    MATCH (v:Variation)-[:BELONGS_TO]->(:SubGroup)-[:PART_OF]->(:Group {name: 'Fruit'})
-    RETURN avg(v.energy_kcal) AS avgEnergy
-}
-WITH avgEnergy
-MATCH (f:Food)<-[:OF]-(v:Variation)-[:BELONGS_TO]->(:SubGroup)-[:PART_OF]->(:Group {name: 'Fruit'})
-WHERE v.energy_kcal > 2*avgEnergy
-RETURN DISTINCT f.name AS food;
+food
+----
+Figs
+Sultanas
+Dried mixed fruit
+Prunes
+Avocado
+Raisins
+Mixed peel
+Currants
+Apricots
+Cherries
+Dates
 
-╒═══════════════════╕
-│"food"             │
-╞═══════════════════╡
-│"Mixed peel"       │
-├───────────────────┤
-│"Figs"             │
-├───────────────────┤
-│"Prunes"           │
-├───────────────────┤
-│"Avocado"          │
-├───────────────────┤
-│"Cherries"         │
-├───────────────────┤
-│"Sultanas"         │
-├───────────────────┤
-│"Apricots"         │
-├───────────────────┤
-│"Dates"            │
-├───────────────────┤
-│"Currants"         │
-├───────────────────┤
-│"Raisins"          │
-├───────────────────┤
-│"Dried mixed fruit"│
-└───────────────────┘
 
-#8
-Apresente as comidas e as suas variantes que possuem uma nota extra (footnote).
+Query 8: Apresente as comidas e as suas variantes que possuem uma nota extra (footnote).
 
-MATCH (v:Variation)-[:OF]->(f:Food)
-WHERE NOT isEmpty(v.description_footnote)
-RETURN f.name AS food, v.code AS variation, v.description_footnote AS note;
+food	|	variation	|	note
+--------------------------------------------
+Fat spread (70-80% fat)	|	17-022	|	Krona contains 70.0g fat, 32.28g satd, 24.49g cis n-9 monounsatd, 7.36g cis n-6 and 1.23g cis n-3 polyunsat, 0.58g trans per 100g food
+Fat spread (70% fat)	|	17-551	|	Flora contains 70.0g fat, 15.5g satd, 20.91 cis n-9 monounsatd, 31.53g cis n-6 and 1.41g cis n-3 polyunsatd, 0.64g trans per 100g food
+Muesli	|	11-494	|	Muesli composition is very variable
+Parsnip	|	13-454	|	Roast parsnip, frozen, contains 2.3g protein, 5.7g fat, 21.0g carbohydrate (11.9g starch, 9.1g sugar), 139kcal and 585kJ energy per 100g
+Whole milk	|	12-316	|	All the values for pasteurised milk are equally applicable to unpasteurised milk
+Grapes	|	14-109	|	Few significant differences reported between varieties
+Bounty bar	|	17-546	|	Bounty bar made with plain chocolate contains 3.2g protein, 26.8 g fat, 56.3g carbohydrate (11.0g starch, 45.3g sugar), 465kcal and 1947kJ of energy per 100g
+Haddock	|	16-063	|	Composition of oven baked haddock in crumbs is very similar to fried in blended oil
+Fruit cocktail	|	14-097	|	Calculated as pears 42%, peaches 41%, pineapple 8%, grapes 5% and cherries 4%
+Cornetto type ice cream cone	|	12-386	|	Strawberry flavour contains 46.8g water, 3.3g protein, 11.8g fat, 34.3g Carbohydrate (9.0g starch, 23.8g sugars), 248kcal energy and 1042kJ energy per 100g
+Cheese	|	12-361	|	Grated in drums contains 19g water, 43.3g protein, 34.6g fat, 0.9g carbohydrate, 488kcal energy and 2031kJ per 100g
+Onions	|	13-307	|	Onion rings in batter, frozen, oven baked contain 3.6g protein, 15.3g fat, 31.3g carbohydrate (26.4g starch, 4.9g sugars), 269kcal and 1128kJ energy per 100g
+Grapefruit juice	|	14-275	|	Frozen samples were diluted as per manufacturers' instructions prior to analysis
+Cream	|	12-334	|	Double cream with added alcohol contains 39.7g fat, 10.3g carbohydrate (8.0g sucrose, 2.0g lactose, 0.3g maltodextrins), 4.98g alcohol, 531kcal energy and 2186kJ energy per 100g
+Lassi	|	12-373	|	Yakult (fermented skimmed milk drink) contains 1.2g protein, 0.1g fat, 18.0g carbohydrate and 77kcal/322kJ energy per 100ml
+Fat spread (40% fat)	|	17-552	|	Flora Light contains 38.0g fat, 8.86g satd, 10.62g cis n-9 monounsatd, 17.44g cis n-6 and 0.62g cis n-3 polyunsatd, 0.43g trans per 100g food
+Semi-skimmed milk	|	12-010	|	SMP = selected milk proteins
 
-╒══════════════════════════════╤═══════════╤══════════════════════════════════════════════════════════════════════╕
-│"food"                        │"variation"│"note"                                                                │
-╞══════════════════════════════╪═══════════╪══════════════════════════════════════════════════════════════════════╡
-│"Muesli"                      │"11-494"   │"Muesli composition is very variable"                                 │
-├──────────────────────────────┼───────────┼──────────────────────────────────────────────────────────────────────┤
-│"Haddock"                     │"16-063"   │"Composition of oven baked haddock in crumbs is very similar to fried │
-│                              │           │in blended oil"                                                       │
-├──────────────────────────────┼───────────┼──────────────────────────────────────────────────────────────────────┤
-│"Lassi"                       │"12-373"   │"Yakult (fermented skimmed milk drink) contains 1.2g protein, 0.1g fat│
-│                              │           │, 18.0g carbohydrate and 77kcal/322kJ energy per 100ml"               │
-├──────────────────────────────┼───────────┼──────────────────────────────────────────────────────────────────────┤
-│"Cornetto type ice cream cone"│"12-386"   │"Strawberry flavour contains 46.8g water, 3.3g protein, 11.8g fat, 34.│
-│                              │           │3g Carbohydrate (9.0g starch, 23.8g sugars), 248kcal energy and 1042kJ│
-│                              │           │ energy per 100g"                                                     │
-├──────────────────────────────┼───────────┼──────────────────────────────────────────────────────────────────────┤
-│"Grapes"                      │"14-109"   │"Few significant differences reported between varieties"              │
-├──────────────────────────────┼───────────┼──────────────────────────────────────────────────────────────────────┤
-│"Semi-skimmed milk"           │"12-010"   │"SMP = selected milk proteins"                                        │
-├──────────────────────────────┼───────────┼──────────────────────────────────────────────────────────────────────┤
-│"Onions"                      │"13-307"   │"Onion rings in batter, frozen, oven baked contain 3.6g protein, 15.3g│
-│                              │           │ fat, 31.3g carbohydrate (26.4g starch, 4.9g sugars), 269kcal and 1128│
-│                              │           │kJ energy per 100g"                                                   │
-├──────────────────────────────┼───────────┼──────────────────────────────────────────────────────────────────────┤
-│"Cheese"                      │"12-361"   │"Grated in drums contains 19g water, 43.3g protein, 34.6g fat, 0.9g ca│
-│                              │           │rbohydrate, 488kcal energy and 2031kJ per 100g"                       │
-├──────────────────────────────┼───────────┼──────────────────────────────────────────────────────────────────────┤
-│"Bounty bar"                  │"17-546"   │"Bounty bar made with plain chocolate contains 3.2g protein, 26.8 g fa│
-│                              │           │t, 56.3g carbohydrate (11.0g starch, 45.3g sugar), 465kcal and 1947kJ │
-│                              │           │of energy per 100g"                                                   │
-├──────────────────────────────┼───────────┼──────────────────────────────────────────────────────────────────────┤
-│"Fat spread (40% fat)"        │"17-552"   │"Flora Light contains 38.0g fat, 8.86g satd, 10.62g cis n-9 monounsatd│
-│                              │           │, 17.44g cis n-6 and 0.62g cis n-3 polyunsatd, 0.43g trans per 100g fo│
-│                              │           │od"                                                                   │
-├──────────────────────────────┼───────────┼──────────────────────────────────────────────────────────────────────┤
-│"Fat spread (70-80% fat)"     │"17-022"   │"Krona contains 70.0g fat, 32.28g satd, 24.49g cis n-9 monounsatd, 7.3│
-│                              │           │6g cis n-6 and 1.23g cis n-3 polyunsat, 0.58g trans per 100g food"    │
-├──────────────────────────────┼───────────┼──────────────────────────────────────────────────────────────────────┤
-│"Whole milk"                  │"12-316"   │"All the values for pasteurised milk are equally applicable to unpaste│
-│                              │           │urised milk"                                                          │
-├──────────────────────────────┼───────────┼──────────────────────────────────────────────────────────────────────┤
-│"Fruit cocktail"              │"14-097"   │"Calculated as pears 42%, peaches 41%, pineapple 8%, grapes 5% and che│
-│                              │           │rries 4%"                                                             │
-├──────────────────────────────┼───────────┼──────────────────────────────────────────────────────────────────────┤
-│"Parsnip"                     │"13-454"   │"Roast parsnip, frozen, contains 2.3g protein, 5.7g fat, 21.0g carbohy│
-│                              │           │drate (11.9g starch, 9.1g sugar), 139kcal and 585kJ energy per 100g"  │
-├──────────────────────────────┼───────────┼──────────────────────────────────────────────────────────────────────┤
-│"Fat spread (70% fat)"        │"17-551"   │"Flora contains 70.0g fat, 15.5g satd, 20.91 cis n-9 monounsatd, 31.53│
-│                              │           │g cis n-6 and 1.41g cis n-3 polyunsatd, 0.64g trans per 100g food"    │
-├──────────────────────────────┼───────────┼──────────────────────────────────────────────────────────────────────┤
-│"Grapefruit juice"            │"14-275"   │"Frozen samples were diluted as per manufacturers' instructions prior │
-│                              │           │to analysis"                                                          │
-├──────────────────────────────┼───────────┼──────────────────────────────────────────────────────────────────────┤
-│"Cream"                       │"12-334"   │"Double cream with added alcohol contains 39.7g fat, 10.3g carbohydrat│
-│                              │           │e (8.0g sucrose, 2.0g lactose, 0.3g maltodextrins), 4.98g alcohol, 531│
-│                              │           │kcal energy and 2186kJ energy per 100g"                               │
-└──────────────────────────────┴───────────┴──────────────────────────────────────────────────────────────────────┘
 
-#9
-Retorne todas as comidas com uma quantidade de água superior a 80g e que não têm variações (comidas que possuem uma única variação sem características).
+Query 9: Retorne todas as comidas com uma quantidade de água superior a 80g e que não têm variações (comidas que possuem uma única variação sem características).
 
-MATCH (f:Food)<-[r:OF]-(v:Variation)
-WITH f, r, v
-WHERE isEmpty(r.characteristics) AND v.water_g > 80
-WITH f, count(v) AS nVariations
-WHERE nVariations = 1
-RETURN f.name AS food;
+food
+----
+Oranges
+Tangerines
+Nectarines
+Satsumas
+Kiwi fruit
+Strong ale/barley wine
+Red wine
+Clementines
 
-╒════════════════════════╕
-│"food"                  │
-╞════════════════════════╡
-│"Nectarines"            │
-├────────────────────────┤
-│"Tangerines"            │
-├────────────────────────┤
-│"Kiwi fruit"            │
-├────────────────────────┤
-│"Strong ale/barley wine"│
-├────────────────────────┤
-│"Red wine"              │
-├────────────────────────┤
-│"Clementines"           │
-├────────────────────────┤
-│"Oranges"               │
-├────────────────────────┤
-│"Satsumas"              │
-└────────────────────────┘
 
-#10
-Apresente o grupo com o maior número de comidas registado.
+Query 10: Apresente o grupo com o maior número de comidas registado.
 
-MATCH (g:Group)<-[:PART_OF]-(:SubGroup)<-[:BELONGS_TO]-(:Variation)-[:OF]->(f:Food)
-WITH g, count(f) AS nFoods
-RETURN g.name AS group, nFoods
-ORDER BY nFoods DESC
-LIMIT 1;
+group	|	nFoods
+----------------------
+Meat and meat products	|	187
 
-╒════════════════════════╤════════╕
-│"group"                 │"nFoods"│
-╞════════════════════════╪════════╡
-│"Meat and meat products"│187     │
-└────────────────────────┴────────┘
+

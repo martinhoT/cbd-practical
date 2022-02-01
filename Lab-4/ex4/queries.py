@@ -8,7 +8,7 @@ class Queries(Connector):
 
     def __init__(self):
         super().__init__()
-        self._table_line = lambda l: '\t'.join(str(s) for s in l)
+        self._table_line = lambda l: '\t|\t'.join(str(s) for s in l)
 
     def query_table(self, query_method, *args, **kwargs):
         with self.session() as s:
@@ -139,15 +139,63 @@ class Queries(Connector):
 
 if __name__ == '__main__':
 
-    with Queries() as db:
 
-        print("Query1:" , db.query_table(db.query1)                                       , sep='\n', end='\n\n')
-        print("Query2:" , db.query_table(db.query2)                                       , sep='\n', end='\n\n')
-        print("Query3:" , db.query_table(db.query3, n_samples=30)                         , sep='\n', end='\n\n')
-        print("Query4:" , db.query_table(db.query4, food='Yogurt')                        , sep='\n', end='\n\n')
-        print("Query5:" , db.query_table(db.query5, characteristic='fresh')               , sep='\n', end='\n\n')
-        print("Query6:" , db.query_table(db.query6, group='Alcoholic beverages', grams=10), sep='\n', end='\n\n')
-        print("Query7:" , db.query_table(db.query7, group='Fruit')                        , sep='\n', end='\n\n')
-        print("Query8:" , db.query_table(db.query8)                                       , sep='\n', end='\n\n')
-        print("Query9:" , db.query_table(db.query9, grams=80)                             , sep='\n', end='\n\n')
-        print("Query10:", db.query_table(db.query10)                                      , sep='\n', end='\n\n')
+    with Queries() as db:
+        
+        query_list = [
+            (
+                'Apresente as 10 comidas com o maior número de variações, incluindo esse número no resultado, ordenado por ordem decrescente do mesmo.',
+                db.query1,
+                {}
+            ),(
+                'Apresente a menor distância do caminho mais curto entre comidas.',
+                db.query2,
+                {}
+            ),(
+                'Apresente o código de todas as variações que foram estabelecidas com mais de 30 samples (análise da descrição).',
+                db.query3,
+                {'n_samples': 30}
+            ),(
+                'Apresente a média de lactose dos iogurtes, arredondado às décimas.',
+                db.query4,
+                {'food': 'Yogurt'}
+            ),(
+                'Para cada grupo, apresente o número de variações frescas de comidas que engloba (se existirem).',
+                db.query5,
+                {'characteristic': 'fresh'}
+            ),(
+                'Apresente todas as bebidas alcoólicas (incluindo a respetiva variante) com uma quantidade de álcool maior que 10g.',
+                db.query6,
+                {'group': 'Alcoholic beverages', 'grams': 10}
+            ),(
+                'Apresente frutas com pelo menos uma variação com uma quantidade de calorias duas vezes maior que a média.',
+                db.query7,
+                {'group': 'Fruit'}
+            ),(
+                'Apresente as comidas e as suas variantes que possuem uma nota extra (footnote).',
+                db.query8,
+                {}
+            ),(
+                'Retorne todas as comidas com uma quantidade de água superior a 80g e que não têm variações (comidas que possuem uma única variação sem características).',
+                db.query9,
+                {'grams': 80}
+            ),(
+                'Apresente o grupo com o maior número de comidas registado.',
+                db.query10,
+                {}
+            )
+        ]
+
+        with open('../CBD_L44c_output.txt', 'w') as f:
+
+            idx = 1
+            print('Progress: 0%', end='')
+
+            for statement, method, kwargs in query_list:
+                f.write(f'Query {idx}: {statement}\n\n{db.query_table(method, **kwargs)}\n\n\n')
+                
+                print(f'\rProgress: {100*idx//len(query_list)}%', end='')
+                idx = idx + 1
+            
+            print()
+                
